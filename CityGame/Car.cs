@@ -1,0 +1,81 @@
+﻿using System;
+using System.Linq;
+using System.Numerics;
+using System.Windows;
+
+namespace CityGame
+{
+    public class Car : Entity
+    {
+        public delegate void CarEvent(Car car);
+        public event CarEvent JourneyFinished;
+        public event CarEvent JourneyImpossible;
+        public Point? Target { get; set; } = null;
+        public int NextTarget { get; set; } = 0;
+        public Point[]? Path { get; set; } = null;
+        public Point Point
+        {
+            get
+            {
+                return new Point((int)X / MainWindow.TileSize, (int)Y / MainWindow.TileSize);
+            }
+            set
+            {
+                X = (float)value.X * MainWindow.TileSize;
+                Y = (float)value.Y * MainWindow.TileSize;
+            }
+        }
+        public float Speed { get; set; } = 256;
+        public override OCanvas Render()
+        {
+            return new SourcedImage("Car.png");
+        }
+        public Car()
+        {
+            JourneyFinished += c => { };
+            JourneyImpossible += c => { };
+        }
+
+        public override void Tick(long deltaTime)
+        {
+            if (Target is not null)
+            {
+                if(Object is not null) Object.ToolTip = Target.ToString();
+                if (Path is null)
+                {
+                    Path = MainWindow.pathfinder.FindPath(Point.Convert(), ((Point)Target).Convert()).Select(x => x.Convert()).ToArray();
+                    NextTarget = 0;
+                }
+                if (Path.Length == 0)
+                {
+                    JourneyImpossible(this);
+                    return;
+                }
+                Point nextTarget = Path[NextTarget];
+                if (X.CloselyEquals(nextTarget.X * MainWindow.TileSize) && Y.CloselyEquals(nextTarget.Y * MainWindow.TileSize))
+                {
+                    NextTarget++;
+                }
+                if (NextTarget == Path.Length)
+                {
+                    Path = null;
+                    Target = null;
+                    NextTarget = 0;
+                    JourneyFinished(this);
+                    return;
+                }
+                if (X.CloselyEquals(nextTarget.X * MainWindow.TileSize) && Y.CloselyEquals(nextTarget.Y * MainWindow.TileSize))
+                    return;
+                Vector2 travel = new Vector2((float)nextTarget.X * 64 - X, (float)nextTarget.Y * 64 - Y);
+                Vector2 direction = Vector2.Normalize(travel);
+                float degrees = (float)(Math.Atan2(direction.Y, direction.X) * (180 / Math.PI)) + 90;
+                Rotation = degrees;
+                var possibleDistance = Speed * deltaTime / 1000;
+                var finalDistance = Math.Min(possibleDistance, travel.Length());
+                Vector2 travelFinal = direction * finalDistance;
+                X += travelFinal.X;
+                Y += travelFinal.Y;
+            }
+        }
+    }
+}

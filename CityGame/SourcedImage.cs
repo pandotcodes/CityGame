@@ -12,15 +12,17 @@ namespace CityGame
 {
     public class SourcedImage : Image
     {
-        public Dictionary<string, List<string>> Alternatives = new Dictionary<string, List<string>>()
+        public Dictionary<string, string> Alternatives = new Dictionary<string, string>()
         {
+            {"Path3.png", "Path3c.png" }
         };
 
         public static Dictionary<string, BitmapSource> loadedSources = new Dictionary<string, BitmapSource>();
 
-        public SourcedImage(string source)
+        public SourcedImage(string source, string tooltip = "")
         {
             Source = SourceToImage(source);
+            ToolTip = source + "\n" + tooltip;
             Height = 64;
             Width = 64;
 
@@ -43,12 +45,9 @@ namespace CityGame
                 uri = string.Join(":", src.Split(':').Take(src.Split(':').Count() - 1).ToArray());
             }
             string last = "";
-            while (Alternatives.ContainsKey(uri) && uri != last)
+            if(Alternatives.ContainsKey(uri))
             {
-                last = uri;
-                List<string> alts = Alternatives[uri];
-                alts.Add(uri);
-                uri = alts[MainWindow.random.Next(0, alts.Count)];
+                uri = Alternatives[uri];
             }
             uri = Environment.CurrentDirectory + "\\Resources\\" + uri;
             if (loadedSources.ContainsKey(src))
@@ -57,7 +56,7 @@ namespace CityGame
             }
             else
             {
-                if(!File.Exists(uri))
+                if (!File.Exists(uri))
                 {
                     uri = Environment.CurrentDirectory + "\\Resources\\ErrorRed.png";
                 }

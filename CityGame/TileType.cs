@@ -5,13 +5,15 @@
         Skyscraper = 100,
         House = 101,
 
-        Park = 200,
+        Park = 220,
 
-        Lake = 300,
-        River = 301,
+        Lake = 310,
+        River = 311,
 
         Road = 400,
-        Path = 401,
-        Bridge = 410
+        Path = 421,
+        Highway = 402,
+        Bridge = 410,
+        HighwayBridge = 411
     }
 }

@@ -18,6 +18,7 @@ namespace CityGame
         }
         public static OCanvas Render(TileType type, int x, int y, Tile[,] Grid)
         {
+            string tooltip = x + ":" + y;
             if (type == TileType.Skyscraper)
             {
                 string theme = "";
@@ -29,7 +30,7 @@ namespace CityGame
                 if (pattern.PatternCode == "1" && MainWindow.random.Next(0, 3) == 0) return new SourcedImage("ParkingLot"+theme+".png:" + pattern.Rotation);
                 if (pattern.PatternCode == "3" && MainWindow.random.Next(0, 12) == 0) pattern.PatternCode = "3a";
                 if (pattern.PatternCode == "3" && MainWindow.random.Next(0, 12) == 1) pattern.PatternCode = "3ab";
-                OCanvas canvas = new SourcedImage("Building"+ theme + pattern.PatternCode + ".png:" + pattern.Rotation);
+                OCanvas canvas = new SourcedImage("Building"+ theme + pattern.PatternCode + ".png:" + pattern.Rotation, tooltip);
 
                 if (MainWindow.random.Next(0, 10) == 0 && pattern.PatternCode != "3a") canvas.Children.Add(new SourcedImage("Vent" + (MainWindow.random.Next(0, 3) + 1) + ".png:" + (MainWindow.random.Next(0, 4) * 90)));
 
@@ -37,30 +38,37 @@ namespace CityGame
             }
             if (type == TileType.Lake || type == TileType.River)
             {
-                Pattern pattern = Pattern.Calculate(Grid, x, y, TileType.Lake, TileType.Bridge, TileType.River);
-                return new SourcedImage("Lake" + pattern.PatternCode + ".png:" + pattern.Rotation);
+                Pattern pattern = Pattern.Calculate(Grid, x, y, TileType.Lake, TileType.Bridge, TileType.River, TileType.HighwayBridge);
+                return new SourcedImage("Lake" + pattern.PatternCode + ".png:" + pattern.Rotation, tooltip);
             }
             if (type == TileType.Park)
             {
                 Pattern pattern = Pattern.Calculate(Grid, x, y, TileType.Park, TileType.Path);
                 OCanvas canvas = new SourcedImage("Park" + pattern.PatternCode + ".png:" + pattern.Rotation);
-                if (MainWindow.random.Next(0, 4) == 0) canvas.Children.Add(new SourcedImage("Tree.png:" + MainWindow.random.Next(0,4) * 90));
+                if (MainWindow.random.Next(0, 4) == 0) canvas.Children.Add(new SourcedImage("Tree.png:" + MainWindow.random.Next(0,4) * 90, tooltip));
                 return canvas;
             }
             if (type == TileType.Road)
             {
-                Pattern pattern = Pattern.Calculate(Grid, x, y, TileType.Road, TileType.Path, TileType.Bridge);
+                Pattern pattern = Pattern.Calculate(Grid, x, y, TileType.Road, TileType.Path, TileType.Bridge, TileType.Highway, TileType.HighwayBridge);
                 if (pattern.PatternCode == "2c") pattern.Rotation += 270;
                 if (pattern.PatternCode == "1") pattern.Rotation += 180;
-                return new SourcedImage("Road" + pattern.PatternCode + ".png:" + pattern.Rotation);
+                return new SourcedImage("Road" + pattern.PatternCode + ".png:" + pattern.Rotation, tooltip);
+            }
+            if (type == TileType.Highway)
+            {
+                Pattern pattern = Pattern.Calculate(Grid, x, y, TileType.Road, TileType.Path, TileType.Bridge, TileType.Highway, TileType.HighwayBridge);
+                if (pattern.PatternCode == "2c") pattern.Rotation += 270;
+                if (pattern.PatternCode == "1") pattern.Rotation += 180;
+                return new SourcedImage("Highway" + pattern.PatternCode + ".png:" + pattern.Rotation, tooltip);
             }
             if (type == TileType.Path)
             {
-                Pattern roadpattern = Pattern.Calculate(Grid, x, y, TileType.Road, TileType.Path, TileType.Bridge);
+                Pattern roadpattern = Pattern.Calculate(Grid, x, y, TileType.Road, TileType.Path, TileType.Bridge, TileType.Highway, TileType.HighwayBridge);
                 Pattern parkpattern = Pattern.Calculate(Grid, x, y, TileType.Path, TileType.Park);
                 if (roadpattern.PatternCode == "2c") roadpattern.Rotation += 270;
                 if (roadpattern.PatternCode == "1") roadpattern.Rotation += 180;
-                Image path = new SourcedImage("Path" + roadpattern.PatternCode + ".png:" + roadpattern.Rotation);
+                Image path = new SourcedImage("Path" + roadpattern.PatternCode + ".png:" + roadpattern.Rotation, tooltip);
                 Image park = new SourcedImage("Park" + parkpattern.PatternCode + ".png:" + parkpattern.Rotation);
 
                 OCanvas result = new OCanvas();
@@ -70,11 +78,11 @@ namespace CityGame
             }
             if (type == TileType.Bridge)
             {
-                Pattern roadpattern = Pattern.Calculate(Grid, x, y, TileType.Road, TileType.Bridge, TileType.Path);
-                Pattern parkpattern = Pattern.Calculate(Grid, x, y, TileType.Bridge, TileType.Lake, TileType.River);
+                Pattern roadpattern = Pattern.Calculate(Grid, x, y, TileType.Road, TileType.Bridge, TileType.Path, TileType.Highway, TileType.HighwayBridge);
+                Pattern parkpattern = Pattern.Calculate(Grid, x, y, TileType.Bridge, TileType.Lake, TileType.River, TileType.HighwayBridge);
                 if (roadpattern.PatternCode == "2c") roadpattern.Rotation += 270;
                 if (roadpattern.PatternCode == "1") roadpattern.Rotation += 180;
-                Image path = new SourcedImage("Bridge" + roadpattern.PatternCode + ".png:" + roadpattern.Rotation);
+                Image path = new SourcedImage("Bridge" + roadpattern.PatternCode + ".png:" + roadpattern.Rotation, tooltip);
                 Image park = new SourcedImage("Lake" + parkpattern.PatternCode + ".png:" + parkpattern.Rotation);
 
                 OCanvas result = new OCanvas();
@@ -82,7 +90,21 @@ namespace CityGame
                 result.Children.Add(path);
                 return result;
             }
-            return new SourcedImage("Error.png");
+            if (type == TileType.HighwayBridge)
+            {
+                Pattern roadpattern = Pattern.Calculate(Grid, x, y, TileType.Road, TileType.Bridge, TileType.Path, TileType.Highway, TileType.HighwayBridge);
+                Pattern parkpattern = Pattern.Calculate(Grid, x, y, TileType.Bridge, TileType.Lake, TileType.River, TileType.HighwayBridge);
+                if (roadpattern.PatternCode == "2c") roadpattern.Rotation += 270;
+                if (roadpattern.PatternCode == "1") roadpattern.Rotation += 180;
+                Image path = new SourcedImage("HighwayBridge" + roadpattern.PatternCode + ".png:" + roadpattern.Rotation, tooltip);
+                Image park = new SourcedImage("Lake" + parkpattern.PatternCode + ".png:" + parkpattern.Rotation);
+
+                OCanvas result = new OCanvas();
+                result.Children.Add(park);
+                result.Children.Add(path);
+                return result;
+            }
+            return new SourcedImage("Error.png", tooltip);
         }
     }
 }

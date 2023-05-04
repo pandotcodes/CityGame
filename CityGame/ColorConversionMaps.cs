@@ -56,5 +56,10 @@ namespace CityGame
                 { "#00000000", "#00b36b00" },
                 { "#616161", "#00b36b00" }
             };
+        public static Dictionary<string, string> RoadToHighwayMap = new Dictionary<string, string>()
+            {
+                { "#00000000", "#00b36b00" },
+                { "#616161", "#303030" }
+            };
     }
 }
