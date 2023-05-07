@@ -73,6 +73,8 @@ namespace CityGame
         Canvas UICanvas = new OCanvas();
         public MainWindow()
         {
+            AddPenumbra();
+
             #region | Texture Conversions |
             string[] patternCodes = new[] { "0", "1", "2", "2c", "3", "3a", "3ab", "3c", "4", "4m", "4c", "5", "7", "8" };
 
@@ -125,6 +127,7 @@ namespace CityGame
             int minBlockWidth = 3;
 
             int NPCCount = (int)Math.Ceiling(mapHeight * mapWidth / 100f);
+            //NPCCount = 1;
 
             random = new Random(seed);
 

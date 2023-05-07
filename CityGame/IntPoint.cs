@@ -13,6 +13,10 @@
         {
             return new IntPoint(a.X + b.X, a.Y + b.Y);
         }
+        public static IntPoint operator *(IntPoint a, int b)
+        {
+            return new IntPoint(a.X * b, a.Y * b);
+        }
         public static bool operator !=(IntPoint a, IntPoint b)
         {
             return a.X != b.X || a.Y != b.Y;

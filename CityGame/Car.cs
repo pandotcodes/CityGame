@@ -29,7 +29,29 @@ namespace CityGame
         public float Speed { get; set; } = 128;
         public override OCanvas Render()
         {
-            return new SourcedImage("Car.png");
+            OCanvas canvas = new OCanvas();
+            Image car = new SourcedImage("Car.png");
+
+            canvas.Children.Add(car);
+            var light = new LightSource { Radius = 64, Intensity = 2, Color = Color.White, Type = LightSourceType.Spotlight, Rotation = -90, RotationOrigin = new Point(MainWindow.TileSize / 2, MainWindow.TileSize / 2) };
+            var light2 = new LightSource { Radius = 64, Intensity = 2, Color = Color.White, Type = LightSourceType.Spotlight, Rotation = -90, RotationOrigin = new Point(MainWindow.TileSize / 2, MainWindow.TileSize / 2) };
+            Canvas.SetLeft(light, 39);
+            Canvas.SetTop(light, 19);
+            Canvas.SetLeft(light2, 46);
+            Canvas.SetTop(light2, 19);
+            canvas.Children.Add(light);
+            canvas.Children.Add(light2);
+
+            var blight = new LightSource { Radius = 24, Intensity = 1, Color = Color.Red, Type = LightSourceType.PointLight, Rotation = 90, RotationOrigin = new Point(MainWindow.TileSize / 2, MainWindow.TileSize / 2) };
+            var blight2 = new LightSource { Radius = 24, Intensity = 1, Color = Color.Red, Type = LightSourceType.PointLight, Rotation = 90, RotationOrigin = new Point(MainWindow.TileSize / 2, MainWindow.TileSize / 2) };
+            Canvas.SetLeft(blight, 39);
+            Canvas.SetTop(blight, 46);
+            Canvas.SetLeft(blight2, 46);
+            Canvas.SetTop(blight2, 46);
+            canvas.Children.Add(blight);
+            canvas.Children.Add(blight2);
+
+            return canvas;
         }
         public Car()
         {
