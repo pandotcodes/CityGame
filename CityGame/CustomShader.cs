@@ -1,9 +1,6 @@
 ﻿using System;
 using System.IO;
-using System.Windows;
-using System.Windows.Media;
-using System.Windows.Media.Effects;
-
+/*
 namespace CityGame
 {
     public class CustomShader : ShaderEffect
@@ -32,4 +29,4 @@ namespace CityGame
             ShaderEffect.RegisterPixelShaderSamplerProperty("Input", typeof(CustomShader), 0);
 
     }
-}
+}*/

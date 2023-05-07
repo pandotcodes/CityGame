@@ -3,15 +3,24 @@ using System.Collections.Generic;
 using System.Diagnostics;
 using System.IO;
 using System.Linq;
-using System.Windows;
-using System.Windows.Controls;
-using System.Windows.Media;
-using System.Windows.Media.Imaging;
+using WPFGame;
+/*
 
-namespace CityGame
+namespace CityGame.OldSourcedImage
 {
     public class SourcedImage : Image
     {
+        public static List<SourcedImage> GetObjectsBySourceFile(params string[] files)
+        {
+            List<SourcedImage> objects = new List<SourcedImage>();
+            foreach(string file in files)
+            {
+                if (!ObjectsBySourceFile.ContainsKey(file)) continue;
+                foreach (var image in ObjectsBySourceFile[file]) objects.Add(image);
+            }
+            return objects;
+        }
+        static Dictionary<string, List<SourcedImage>> ObjectsBySourceFile = new Dictionary<string, List<SourcedImage>>();
         public Dictionary<string, string> Alternatives = new Dictionary<string, string>()
         {
             {"Path3.png", "Path3c.png" }
@@ -49,6 +58,11 @@ namespace CityGame
             {
                 uri = Alternatives[uri];
             }
+            if(!ObjectsBySourceFile.ContainsKey(uri))
+            {
+                ObjectsBySourceFile.Add(uri, new List<SourcedImage>());
+            }
+            ObjectsBySourceFile[uri].Add(this);
             uri = Environment.CurrentDirectory + "\\Resources\\" + uri;
             if (loadedSources.ContainsKey(src))
             {
@@ -65,4 +79,4 @@ namespace CityGame
             }
         }
     }
-}
+}*/

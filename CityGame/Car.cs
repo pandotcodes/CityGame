@@ -1,7 +1,8 @@
-﻿using System;
+﻿using Microsoft.Xna.Framework;
+using System;
 using System.Linq;
-using System.Numerics;
 using System.Windows;
+using WPFGame;
 
 namespace CityGame
 {
@@ -25,7 +26,7 @@ namespace CityGame
                 Y = (float)value.Y * MainWindow.TileSize;
             }
         }
-        public float Speed { get; set; } = 256;
+        public float Speed { get; set; } = 128;
         public override OCanvas Render()
         {
             return new SourcedImage("Car.png");
@@ -40,7 +41,7 @@ namespace CityGame
         {
             if (Target is not null)
             {
-                if(Object is not null) Object.ToolTip = Target.ToString();
+                //if(Object is not null) Object.ToolTip = Target.ToString();
                 if (Path is null)
                 {
                     Path = MainWindow.pathfinder.FindPath(Point.Convert(), ((Point)Target).Convert()).Select(x => x.Convert()).ToArray();

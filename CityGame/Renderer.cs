@@ -1,4 +1,4 @@
-﻿using System.Windows.Controls;
+﻿using WPFGame;
 
 namespace CityGame
 {
@@ -32,7 +32,10 @@ namespace CityGame
                 if (pattern.PatternCode == "3" && MainWindow.random.Next(0, 12) == 1) pattern.PatternCode = "3ab";
                 OCanvas canvas = new SourcedImage("Building"+ theme + pattern.PatternCode + ".png:" + pattern.Rotation, tooltip);
 
-                if (MainWindow.random.Next(0, 10) == 0 && pattern.PatternCode != "3a") canvas.Children.Add(new SourcedImage("Vent" + (MainWindow.random.Next(0, 3) + 1) + ".png:" + (MainWindow.random.Next(0, 4) * 90)));
+                if (theme == "Blue" && pattern.PatternCode == "8" && MainWindow.random.Next(0, 4) == 0) canvas.Children.Add(new SourcedImage("Helipad.png"));
+                else if (theme == "Blue" && pattern.PatternCode == "5" && MainWindow.random.Next(0, 2) == 0) canvas.Children.Add(new SourcedImage("Garage.png:" + pattern.Rotation));
+                else if (theme == "Blue" && pattern.PatternCode == "0") canvas.Children.Add(new SourcedImage("Garage.png:270"));
+                else if (MainWindow.random.Next(0, 10) == 0 && pattern.PatternCode != "3a") canvas.Children.Add(new SourcedImage("Vent" + (MainWindow.random.Next(0, 3) + 1) + ".png:" + (MainWindow.random.Next(0, 4) * 90)));
 
                 return canvas;
             }

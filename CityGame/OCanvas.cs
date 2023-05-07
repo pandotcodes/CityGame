@@ -1,4 +1,4 @@
-﻿using System.Windows.Controls;
+﻿using WPFGame;
 
 namespace CityGame
 {
@@ -12,8 +12,6 @@ namespace CityGame
         }
         public OCanvas() : base()
         {
-            this.Height = 100;
-            this.Width = 100;
         }
     }
 }

@@ -1,32 +1,58 @@
 ﻿using AStar;
 using AStar.Options;
+using Microsoft.Xna.Framework;
+using Microsoft.Xna.Framework.Input;
 using SimplexNoise;
 using System;
 using System.Collections.Generic;
 using System.Diagnostics;
 using System.Linq;
-using System.Net.WebSockets;
-using System.Reflection.Metadata;
-using System.Runtime.InteropServices;
-using System.Text;
-using System.Threading.Tasks;
-using System.Windows;
-using System.Windows.Controls;
-using System.Windows.Data;
-using System.Windows.Documents;
-using System.Windows.Input;
-using System.Windows.Media;
-using System.Windows.Navigation;
-using System.Windows.Shapes;
-using System.Windows.Threading;
+using WPFGame;
 
 namespace CityGame
 {
+
+    public class Program { public static void Main() { new MainWindow(); } }
     /// <summary>
     /// Interaction logic for MainWindow.xaml
     /// </summary>
     public partial class MainWindow : Window
     {
+        public ISelectable GetSelectableFromClick(MouseState click)
+        {
+            Point point = new Point(click.X, click.Y);
+            point.X -= (int)Canvas.GetLeft(CameraCanvas);
+            point.Y -= (int)Canvas.GetTop(CameraCanvas);
+            point.X = (int)(point.X / CameraCanvas.ScaleX);
+            point.Y = (int)(point.Y / CameraCanvas.ScaleY);
+
+            foreach (Entity entity in Entities)
+            {
+                double diff = new Vector2((int)entity.X + TileSize / 2 - point.X, (int)entity.Y + TileSize / 2 - point.Y).Length();
+                if (diff < TileSize / 2) return entity;
+            }
+            int x = point.X / TileSize;
+            int y = point.Y / TileSize;
+            if (x < 0 || y < 0) return null;
+            if (x > Grid.GetLength(0) - 1 || y > Grid.GetLength(1) - 1) return null;
+
+            return Grid[x, y];
+        }
+        public static Entity GetEntityFromImage(Image image)
+        {
+            foreach (Entity entity in Entities)
+            {
+                if (entity.Object == image.Parent) return entity;
+            }
+            return null;
+        }
+        public static Tile? GetTileFromImage(Image image)
+        {
+            double x = Canvas.GetLeft(image.Parent) / TileSize;
+            double y = Canvas.GetTop(image.Parent) / TileSize;
+            if (x % 1 != 0 || y % 1 != 0) return null;
+            return Grid[(int)x, (int)y];
+        }
         public static Random random;
         public static bool MouseIsDown = false;
         public static Point MousePos = new Point(0, 0);
@@ -36,6 +62,15 @@ namespace CityGame
         public static List<Tile> npcWalkable = new List<Tile>();
         public static List<Entity> Entities { get; set; } = new List<Entity>();
         public const int TileSize = 64;
+        public static Tile[,] Grid;
+        public static ISelectable Selected;
+        public static OCanvas[,] ImageGrid;
+
+        Canvas MainCanvas = new OCanvas();
+        Canvas BGCanvas = new OCanvas();
+        Canvas GameCanvas = new OCanvas();
+        Canvas CameraCanvas = new OCanvas();
+        Canvas UICanvas = new OCanvas();
         public MainWindow()
         {
             #region | Texture Conversions |
@@ -63,11 +98,7 @@ namespace CityGame
             ImageConverter.ChangeColor("Error", "ErrorRed", new Dictionary<string, string> { { "#000000", "#ff0000" } });
             #endregion
 
-            InitializeComponent();
-
-            #region | Map Generation |
-            #region | Map Generation Constants |
-            int seed = 3;
+            int seed = 8;
 
             Noise.Seed = seed;
 
@@ -93,11 +124,9 @@ namespace CityGame
             int minBlockHeight = 3;
             int minBlockWidth = 3;
 
-            int NPCCount = 1;
+            int NPCCount = (int)Math.Ceiling(mapHeight * mapWidth / 100f);
 
             random = new Random(seed);
-
-            #endregion
 
             #region | Map Initialization |
             Tile[,] InitialGrid = new Tile[mapWidth, mapHeight];
@@ -179,9 +208,6 @@ namespace CityGame
                     IntermediateGrid[x * 2 + 1, y * 2].Y = y * 2;
                 }
             }
-            #endregion
-
-            #region | Roads and Bridges |
             Dictionary<int, bool> decidedBridges = new Dictionary<int, bool>();
             pathfindingGrid = new short[doubleWidth, doubleHeight];
             pathfindingGridDesperate = new short[doubleWidth, doubleHeight];
@@ -214,10 +240,6 @@ namespace CityGame
                 }
             }
 
-            #endregion
-
-            #region | Pathfinding |
-
             int mainRoadCount = random.Next(1, 5);
             for (int m = 0; m < mainRoadCount; m++)
             {
@@ -228,20 +250,20 @@ namespace CityGame
                 if (variant == 0)
                 {
                     int x = 0;
-                    int y = random.Next(0, doubleHeight);
+                    int y = random.Next(0 + 2, doubleHeight - 2);
                     startPoint = new IntPoint(x, y);
                     endPoint = new IntPoint(doubleWidth, y);
                     step = new IntPoint(1, 0);
                 }
                 else
                 {
-                    int x = random.Next(0, doubleWidth);
+                    int x = random.Next(0 + 2, doubleWidth - 2);
                     int y = 0;
                     startPoint = new IntPoint(x, y);
                     endPoint = new IntPoint(x, doubleHeight);
                     step = new IntPoint(0, 1);
                 }
-                while(startPoint != endPoint)
+                while (startPoint != endPoint)
                 {
                     int x = (int)startPoint.X;
                     int y = (int)startPoint.Y;
@@ -280,7 +302,7 @@ namespace CityGame
 
             #endregion
 
-            Tile[,] Grid = IntermediateGrid;
+            Grid = IntermediateGrid;
             //for(int y = 0; y < mapHeight; y++)
             //{
             //    for(int x = 0; x < mapWidth; x++)
@@ -292,22 +314,10 @@ namespace CityGame
             mapHeight *= 2;
             mapWidth *= 2;
 
-            #endregion
-
-            Show();
-
-            #region | Rendering |
-
-            Canvas MainCanvas = new OCanvas();
-            Canvas BGCanvas = new OCanvas();
-            Canvas GameCanvas = new OCanvas();
-            Canvas CameraCanvas = new OCanvas();
-            Canvas UICanvas = new OCanvas();
+            ImageGrid = new OCanvas[doubleWidth, doubleHeight];
 
             Canvas.SetLeft(CameraCanvas, 0);
             Canvas.SetTop(CameraCanvas, 0);
-
-            RenderOptions.SetEdgeMode(GameCanvas, EdgeMode.Aliased);
 
             MainCanvas.Children.Add(CameraCanvas);
             MainCanvas.Children.Add(UICanvas);
@@ -315,10 +325,7 @@ namespace CityGame
             CameraCanvas.Children.Add(BGCanvas);
             CameraCanvas.Children.Add(GameCanvas);
 
-            MainCanvas.HorizontalAlignment = HorizontalAlignment.Left;
-            MainCanvas.VerticalAlignment = VerticalAlignment.Top;
-
-            Content = MainCanvas;
+            ContentCanvas = MainCanvas;
 
             int tileSize = TileSize;
             for (int x = 0; x < mapWidth; x++)
@@ -327,13 +334,10 @@ namespace CityGame
                 {
                     Canvas image = Renderer.Render(Grid[x, y].Type, x, y, Grid);
 
-                    image.Height = tileSize;
-                    image.Width = tileSize;
-
-                    RenderOptions.SetBitmapScalingMode(image, BitmapScalingMode.NearestNeighbor);
-
                     Canvas.SetLeft(image, x * tileSize);
                     Canvas.SetTop(image, y * tileSize);
+
+                    ImageGrid[x, y] = (OCanvas)image;
 
                     //image.Opacity = pathfindingGrid[y, x];
 
@@ -341,81 +345,13 @@ namespace CityGame
                 }
             }
 
-            #endregion
-
-            #region | Controls |
-
-            MainCanvas.MouseDown += (a, b) => MouseIsDown = true;
-            MainCanvas.MouseUp += (a, b) => MouseIsDown = false;
-            MainCanvas.MouseMove += (a, b) =>
+            foreach (Image image in SourcedImage.GetObjectsBySourceFile("Helipad.png"))
             {
-                if (MouseIsDown)
-                {
-                    var newpos = PointToScreen(Mouse.GetPosition(this));
-                    var diff = newpos - MousePos;
-                    Canvas.SetLeft(CameraCanvas, Canvas.GetLeft(CameraCanvas) + diff.X);
-                    Canvas.SetTop(CameraCanvas, Canvas.GetTop(CameraCanvas) + diff.Y);
-                }
-                MousePos = PointToScreen(Mouse.GetPosition(this));
-            };
+                float x = (float)Canvas.GetLeft(image.Parent);
+                float y = (float)Canvas.GetTop(image.Parent);
 
-            ScaleTransform scale = new ScaleTransform(1, 1);
-            CameraCanvas.RenderTransform = scale;
-
-            MainCanvas.MouseWheel += (a, b) =>
-            {
-                float multi = 0.952f;
-                if (b.Delta > 0) multi = 1.05f;
-
-                scale.ScaleX *= multi;
-                scale.ScaleY *= multi;
-
-                if (b.Delta < 0)
-                {
-                    scale.ScaleX = Math.Floor(scale.ScaleX * 100) / 100f;
-                    scale.ScaleY = Math.Floor(scale.ScaleY * 100) / 100f;
-                }
-                else
-                {
-                    scale.ScaleX = Math.Ceiling(scale.ScaleX * 100) / 100f;
-                    scale.ScaleY = Math.Ceiling(scale.ScaleY * 100) / 100f;
-                }
-
-                Debug.WriteLine(scale.ScaleX);
-            };
-            #endregion
-
-            #region | Entities |
-
-            DispatcherTimer EntityLoop = new DispatcherTimer { Interval = TimeSpan.FromSeconds(1 / 10) };
-            EntityLoop.Tick += (a, b) =>
-            {
-                long milliseconds = DateTime.Now.Ticks / TimeSpan.TicksPerMillisecond;
-                foreach (Entity entity in Entities)
-                {
-                    long delta = milliseconds - entity.Time;
-                    entity.Time = milliseconds;
-                    entity.Tick(delta);
-
-                    if (entity.Object is null)
-                    {
-                        entity.Object = entity.Render();
-                        RenderOptions.SetBitmapScalingMode(entity.Object, BitmapScalingMode.NearestNeighbor);
-                        var rt = new RotateTransform(entity.Rotation);
-                        rt.CenterX = MainWindow.TileSize / 2;
-                        rt.CenterY = MainWindow.TileSize / 2;
-                        entity.Object.RenderTransform = rt;
-                        GameCanvas.Children.Add(entity.Object);
-                    }
-                    ((RotateTransform)entity.Object.RenderTransform).Angle = entity.Rotation;
-                    Canvas.SetLeft(entity.Object, entity.X);
-                    Canvas.SetTop(entity.Object, entity.Y);
-
-                }
-            };
-            EntityLoop.Start();
-
-            #endregion
+                Entities.Add(new Helicopter { X = x, Y = y });
+            }
 
             for (int n = 0; n < NPCCount; n++)
             {
@@ -430,19 +366,82 @@ namespace CityGame
                 Car.CarEvent reset = car =>
                 {
                     Tile targetTile = npcWalkable[random.Next(0, npcWalkable.Count)];
-                    DispatcherTimer delay = new DispatcherTimer { Interval = TimeSpan.FromSeconds(random.Next(1, 5)) };
-                    delay.Tick += (a, b) =>
-                    {
-                        car.Target = new Point(targetTile.X, targetTile.Y);
-                        delay.Stop();
-                    };
-                    delay.Start();
+                    car.Target = new Point(targetTile.X, targetTile.Y);
                 };
 
                 car.JourneyFinished += reset;
                 car.JourneyImpossible += reset;
 
                 Entities.Add(car);
+            }
+
+            Show();
+        }
+        int swv;
+        protected override void Update(GameTime time)
+        {
+            MouseState state = Mouse.GetState();
+
+            if (state.MiddleButton == ButtonState.Pressed)
+            {
+                var newpos = new Point(state.X, state.Y);
+                var diff = newpos - MousePos;
+                Canvas.SetLeft(CameraCanvas, Canvas.GetLeft(CameraCanvas) + diff.X);
+                Canvas.SetTop(CameraCanvas, Canvas.GetTop(CameraCanvas) + diff.Y);
+            }
+            MousePos = new Point(state.X, state.Y);
+
+
+            float delta = state.ScrollWheelValue - swv;
+            swv = state.ScrollWheelValue;
+            if (delta != 0)
+            {
+                Debug.WriteLine(delta);
+            }
+            float multi = 1.05f;
+            if (delta < 0) multi = 1 / multi;
+
+            if (delta != 0)
+            {
+                CameraCanvas.ScaleX *= multi;
+                CameraCanvas.ScaleY *= multi;
+            }
+
+            if (state.LeftButton == ButtonState.Pressed)
+            {
+                ISelectable select = GetSelectableFromClick(state);
+                if (select is not null)
+                {
+                    if (Selected is not null) Selected.GetImage().Opacity = 1;
+                    Selected = select;
+                    Selected.GetImage().Opacity = 0.5f;
+                }
+            }
+            else if (state.RightButton == ButtonState.Pressed)
+            {
+                ISelectable select = GetSelectableFromClick(state);
+                if (select is not null)
+                {
+                    Selected.RunAction(select);
+                }
+            }
+
+            long milliseconds = DateTime.Now.Ticks / TimeSpan.TicksPerMillisecond;
+            foreach (Entity entity in Entities)
+            {
+                long deltaTime = milliseconds - entity.Time;
+                entity.Time = milliseconds;
+                entity.Tick(deltaTime);
+
+                if (entity.Object is null)
+                {
+                    entity.Object = entity.Render();
+                    GameCanvas.Children.Add(entity.Object);
+                }
+                entity.Object.Rotation = (int)entity.Rotation;
+                Canvas.SetLeft(entity.Object, entity.X);
+                Canvas.SetTop(entity.Object, entity.Y);
+
             }
         }
     }
