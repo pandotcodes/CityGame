@@ -42,8 +42,8 @@ namespace CityGame
             canvas.Children.Add(light);
             canvas.Children.Add(light2);
 
-            var blight = new LightSource { Radius = 24, Intensity = 1, Color = Color.Red, Type = LightSourceType.PointLight, Rotation = 90, RotationOrigin = new Point(MainWindow.TileSize / 2, MainWindow.TileSize / 2) };
-            var blight2 = new LightSource { Radius = 24, Intensity = 1, Color = Color.Red, Type = LightSourceType.PointLight, Rotation = 90, RotationOrigin = new Point(MainWindow.TileSize / 2, MainWindow.TileSize / 2) };
+            var blight = new LightSource { Radius = 12, Intensity = 0.5f, Color = Color.Red, Type = LightSourceType.PointLight, Rotation = 90, RotationOrigin = new Point(MainWindow.TileSize / 2, MainWindow.TileSize / 2) };
+            var blight2 = new LightSource { Radius = 12, Intensity = 0.5f, Color = Color.Red, Type = LightSourceType.PointLight, Rotation = 90, RotationOrigin = new Point(MainWindow.TileSize / 2, MainWindow.TileSize / 2) };
             Canvas.SetLeft(blight, 39);
             Canvas.SetTop(blight, 46);
             Canvas.SetLeft(blight2, 46);
