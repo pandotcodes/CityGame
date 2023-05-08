@@ -406,7 +406,6 @@ namespace CityGame
         int swv;
         protected override Color SkyColor(long SpeedFactor)
         {
-            return Color.Black;
             return base.SkyColor(180);
         }
         protected override void Update(GameTime time)
