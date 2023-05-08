@@ -4,6 +4,7 @@ using CityGame.Classes.Entities;
 using CityGame.Classes.Rendering;
 using CityGame.Classes.World;
 using Microsoft.Xna.Framework;
+using Microsoft.Xna.Framework.Audio;
 using Microsoft.Xna.Framework.Input;
 using SimplexNoise;
 using System;
@@ -12,6 +13,7 @@ using System.Diagnostics;
 using System.Globalization;
 using System.Linq;
 using System.Speech.Synthesis;
+using System.Speech.Synthesis.TtsEngine;
 using WPFGame;
 
 namespace CityGame
@@ -61,6 +63,7 @@ namespace CityGame
         public static bool MouseIsDown = false;
         public static Vector2 MousePos = new Vector2(0, 0);
         public static PathFinder pathfinder;
+        public static PathFinder pathfinderDesperate;
         public static short[,] pathfindingGrid;
         public static short[,] pathfindingGridDesperate;
         public static List<Tile> npcWalkable = new List<Tile>();
@@ -75,6 +78,8 @@ namespace CityGame
         internal static Canvas GameCanvas = new OCanvas();
         Canvas CameraCanvas = new OCanvas();
         Canvas UICanvas = new OCanvas();
+
+        public static AudioListener SoundEffectListener;
         public MainWindow()
         {
             AddPenumbra();
@@ -353,7 +358,8 @@ namespace CityGame
 
             var worldGrid = new WorldGrid(pathfindingGrid);
             pathfinder = new PathFinder(worldGrid, new PathFinderOptions { PunishChangeDirection = true, UseDiagonals = false, SearchLimit = int.MaxValue, HeuristicFormula = AStar.Heuristics.HeuristicFormula.Euclidean });
-
+            var worldGridDesperate = new WorldGrid(pathfindingGridDesperate);
+            pathfinderDesperate = new PathFinder(worldGridDesperate, new PathFinderOptions { PunishChangeDirection = true, UseDiagonals = false, SearchLimit = int.MaxValue, HeuristicFormula = AStar.Heuristics.HeuristicFormula.Euclidean });
 
             foreach (Image image in SourcedImage.GetObjectsBySourceFile("Helipad.png"))
             {
@@ -393,11 +399,14 @@ namespace CityGame
                 Entities.Add(car);
             }
 
+            SoundEffectListener = new AudioListener { Position = new Vector3(0, 0, 100) };
+
             Show();
         }
         int swv;
         protected override Color SkyColor(long SpeedFactor)
         {
+            return Color.Black;
             return base.SkyColor(180);
         }
         protected override void Update(GameTime time)
@@ -410,6 +419,7 @@ namespace CityGame
                 var diff = newpos - MousePos;
                 diff /= CameraZoom;
                 CameraPosition += diff;
+                SoundEffectListener.Position = new Vector3(CameraPosition, SoundEffectListener.Position.Z);
             }
             MousePos = new Vector2(state.X, state.Y);
 
@@ -425,6 +435,8 @@ namespace CityGame
 
             if (delta != 0)
             {
+                if (multi > 1) SoundEffectListener.Position = new Vector3(SoundEffectListener.Position.X, SoundEffectListener.Position.Y, SoundEffectListener.Position.Z - 10);
+                else SoundEffectListener.Position = new Vector3(SoundEffectListener.Position.X, SoundEffectListener.Position.Y, SoundEffectListener.Position.Z + 10);
                 CameraZoom *= multi;
             }
 

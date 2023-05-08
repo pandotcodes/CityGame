@@ -4,7 +4,7 @@ using CityGame.Classes.World;
 
 namespace CityGame.Classes.Rendering
 {
-    public class Pattern
+    public struct Pattern
     {
         public string PatternCode { get; set; }
         public int Rotation { get; set; }

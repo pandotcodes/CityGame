@@ -7,6 +7,7 @@ namespace CityGame.Classes.World
     {
         public int BlockID;
         public TileType Type;
+        public Pattern Pattern;
         public int X;
         public int Y;
         public UIElement Element;

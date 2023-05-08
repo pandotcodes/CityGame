@@ -42,16 +42,20 @@ namespace CityGame.Classes.Rendering
                 if (pattern.PatternCode == "0" && Grid[x, y].Type == TileType.Garage) canvas.Children.Add(new SourcedImage("Garage.png:270"));
                 if (Grid[x,y].Type == TileType.Helipad) canvas.Children.Add(new SourcedImage("Helipad.png"));
 
+                Grid[x, y].Pattern = pattern;
+
                 return canvas;
             }
             if (type == TileType.Lake || type == TileType.River)
             {
                 Pattern pattern = Pattern.Calculate(Grid, x, y, TileType.Lake, TileType.Bridge, TileType.River, TileType.HighwayBridge);
+                Grid[x, y].Pattern = pattern;
                 return new SourcedImage("Lake" + pattern.PatternCode + ".png:" + pattern.Rotation, tooltip);
             }
             if (type == TileType.Park)
             {
                 Pattern pattern = Pattern.Calculate(Grid, x, y, TileType.Park, TileType.Path);
+                Grid[x, y].Pattern = pattern;
                 OCanvas canvas = new SourcedImage("Park" + pattern.PatternCode + ".png:" + pattern.Rotation);
                 if (MainWindow.random.Next(0, 4) == 0) canvas.Children.Add(new SourcedImage("Tree.png:" + MainWindow.random.Next(0, 4) * 90, tooltip));
                 return canvas;
@@ -59,6 +63,7 @@ namespace CityGame.Classes.Rendering
             if (type == TileType.Road)
             {
                 Pattern pattern = Pattern.Calculate(Grid, x, y, TileType.Road, TileType.Path, TileType.Bridge, TileType.Highway, TileType.HighwayBridge);
+                Grid[x, y].Pattern = pattern;
                 if (pattern.PatternCode == "2c") pattern.Rotation += 270;
                 if (pattern.PatternCode == "1") pattern.Rotation += 180;
                 return new SourcedImage("Road" + pattern.PatternCode + ".png:" + pattern.Rotation, tooltip);
@@ -66,6 +71,7 @@ namespace CityGame.Classes.Rendering
             if (type == TileType.Highway)
             {
                 Pattern pattern = Pattern.Calculate(Grid, x, y, TileType.Road, TileType.Path, TileType.Bridge, TileType.Highway, TileType.HighwayBridge);
+                Grid[x, y].Pattern = pattern;
                 if (pattern.PatternCode == "2c") pattern.Rotation += 270;
                 if (pattern.PatternCode == "1") pattern.Rotation += 180;
                 return new SourcedImage("Highway" + pattern.PatternCode + ".png:" + pattern.Rotation, tooltip);
@@ -74,6 +80,7 @@ namespace CityGame.Classes.Rendering
             {
                 Pattern roadpattern = Pattern.Calculate(Grid, x, y, TileType.Road, TileType.Path, TileType.Bridge, TileType.Highway, TileType.HighwayBridge);
                 Pattern parkpattern = Pattern.Calculate(Grid, x, y, TileType.Path, TileType.Park);
+                Grid[x, y].Pattern = roadpattern;
                 if (roadpattern.PatternCode == "2c") roadpattern.Rotation += 270;
                 if (roadpattern.PatternCode == "1") roadpattern.Rotation += 180;
                 Image path = new SourcedImage("Path" + roadpattern.PatternCode + ".png:" + roadpattern.Rotation, tooltip);
@@ -88,6 +95,7 @@ namespace CityGame.Classes.Rendering
             {
                 Pattern roadpattern = Pattern.Calculate(Grid, x, y, TileType.Road, TileType.Bridge, TileType.Path, TileType.Highway, TileType.HighwayBridge);
                 Pattern parkpattern = Pattern.Calculate(Grid, x, y, TileType.Bridge, TileType.Lake, TileType.River, TileType.HighwayBridge);
+                Grid[x, y].Pattern = roadpattern;
                 if (roadpattern.PatternCode == "2c") roadpattern.Rotation += 270;
                 if (roadpattern.PatternCode == "1") roadpattern.Rotation += 180;
                 Image path = new SourcedImage("Bridge" + roadpattern.PatternCode + ".png:" + roadpattern.Rotation, tooltip);
@@ -102,6 +110,7 @@ namespace CityGame.Classes.Rendering
             {
                 Pattern roadpattern = Pattern.Calculate(Grid, x, y, TileType.Road, TileType.Bridge, TileType.Path, TileType.Highway, TileType.HighwayBridge);
                 Pattern parkpattern = Pattern.Calculate(Grid, x, y, TileType.Bridge, TileType.Lake, TileType.River, TileType.HighwayBridge);
+                Grid[x, y].Pattern = roadpattern;
                 if (roadpattern.PatternCode == "2c") roadpattern.Rotation += 270;
                 if (roadpattern.PatternCode == "1") roadpattern.Rotation += 180;
                 Image path = new SourcedImage("HighwayBridge" + roadpattern.PatternCode + ".png:" + roadpattern.Rotation, tooltip);

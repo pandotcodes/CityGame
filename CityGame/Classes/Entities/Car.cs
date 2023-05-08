@@ -3,6 +3,7 @@ using CityGame.Classes.World;
 using Microsoft.Xna.Framework;
 using System;
 using System.Collections.Generic;
+using System.Diagnostics.Eventing.Reader;
 using System.Linq;
 using System.Runtime.ConstrainedExecution;
 using System.Windows;
@@ -10,27 +11,15 @@ using WPFGame;
 
 namespace CityGame.Classes.Entities
 {
-    public class PoliceCar : Car
-    {
-        public static List<PoliceCar> Cars = new List<PoliceCar>();
-        public PoliceCar() : base()
-        {
-            Cars.Add(this);
-            Speed = 192;
-            PNGFile = "PoliceCar.png";
-        }
-        public override void Tick(long deltaTime)
-        {
-
-            base.Tick(deltaTime);
-        }
-    }
     public class Car : Entity
     {
+        public bool desperate = false;
+        public static List<Car> Cars = new List<Car>();
         public delegate void CarEvent(Car car);
         public event CarEvent JourneyFinished;
         public event CarEvent JourneyImpossible;
-        public ISelectable Target { get; set; } = null;
+        ISelectable target = null;
+        public ISelectable Target { get { return target; } set { target = value; Path = null; } }
         public int NextTarget { get; set; } = 0;
         public Point[]? Path { get; set; } = null;
         public Point Point
@@ -84,20 +73,27 @@ namespace CityGame.Classes.Entities
             lights.Add(blight);
             lights.Add(blight2);
 
-            debugRect = new ColoredRectangle();
-            MainWindow.GameCanvas.Children.Add(debugRect);
-
             return canvas;
         }
         public Car()
         {
+            Cars.Add(this);
             JourneyFinished += c => { };
             JourneyImpossible += c => { };
         }
 
         public override void Tick(long deltaTime)
         {
+            //deltaTime *= 500;
+            Tuple<TileType, string>[] fullBlockTiles = new Tuple<TileType, string>[]
+            {
+                new Tuple<TileType, string>(TileType.Road, "4c"),
+                new Tuple<TileType, string>(TileType.Road, "3c"),
+                new Tuple<TileType, string>(TileType.Road, "1"),
+                new Tuple<TileType, string>(TileType.Garage, null)
+            };
             Tile myTile = MainWindow.Grid[Point.X, Point.Y];
+            bool fullBlock = fullBlockTiles.Any(x => (x.Item1 == myTile.Type || (x.Item1 == TileType.Road && (myTile.Type == TileType.Path || myTile.Type == TileType.Highway || myTile.Type == TileType.Bridge || myTile.Type == TileType.HighwayBridge))) && (x.Item2 == myTile.Pattern.PatternCode || x.Item2 is null));
             if (myTile.Type == TileType.Garage)
             {
                 Rotation = ((Canvas)myTile.Element).Children[1].Rotation-90;
@@ -109,7 +105,9 @@ namespace CityGame.Classes.Entities
                 //if(Object is not null) Object.ToolTip = Target.ToString();
                 if (Path is null)
                 {
-                    Path = MainWindow.pathfinder.FindPath(Point.Convert(), new Point((int)(Target.X() / MainWindow.TileSize), (int)(Target.Y() / MainWindow.TileSize)).Convert()).Select(x => x.Convert()).ToArray();
+                    var pf = MainWindow.pathfinder;
+                    if (desperate) pf = MainWindow.pathfinderDesperate;
+                    Path = pf.FindPath(Point.Convert(), new Point((int)(Target.X() / MainWindow.TileSize), (int)(Target.Y() / MainWindow.TileSize)).Convert()).Select(x => x.Convert()).ToArray();
                     NextTarget = 0;
                 }
                 if (Path.Length == 0)
@@ -128,6 +126,16 @@ namespace CityGame.Classes.Entities
                     Path = null;
                     NextTarget = 0;
                     JourneyFinished(this);
+                    if (Math.Round(Rotation) == 0 || Math.Round(Rotation) == 90)
+                    {
+                        if (!OccupiedTilesFill.ContainsKey(myTile)) OccupiedTilesFill.Add(myTile, this);
+                        if (!OccupiedTilesFill2.ContainsKey(myTile) && fullBlock) OccupiedTilesFill2.Add(myTile, this);
+                    }
+                    if (Math.Round(Rotation) == 180 || Math.Round(Rotation) == 270)
+                    {
+                        if (!OccupiedTilesFill2.ContainsKey(myTile)) OccupiedTilesFill2.Add(myTile, this);
+                        if (!OccupiedTilesFill.ContainsKey(myTile) && fullBlock) OccupiedTilesFill.Add(myTile, this);
+                    }
                     return;
                 }
                 if (X.CloselyEquals(nextTarget.X * MainWindow.TileSize) && Y.CloselyEquals(nextTarget.Y * MainWindow.TileSize))
@@ -146,12 +154,14 @@ namespace CityGame.Classes.Entities
                 if (Math.Round(Rotation) == 0 || Math.Round(Rotation) == 90)
                 {
                     if (!OccupiedTilesFill.ContainsKey(myTile)) OccupiedTilesFill.Add(myTile, this);
+                    if (!OccupiedTilesFill2.ContainsKey(myTile) && fullBlock) OccupiedTilesFill2.Add(myTile, this);
                     if (OccupiedTiles.ContainsKey(targetTile) && OccupiedTiles[targetTile] != this) SpeedMulti = 0;
                 }
                 if (Math.Round(Rotation) == 180 || Math.Round(Rotation) == 270)
                 {
                     if (!OccupiedTilesFill2.ContainsKey(myTile)) OccupiedTilesFill2.Add(myTile, this);
                     if (OccupiedTiles2.ContainsKey(targetTile) && OccupiedTiles2[targetTile] != this) SpeedMulti = 0;
+                    if (!OccupiedTilesFill.ContainsKey(myTile) && fullBlock) OccupiedTilesFill.Add(myTile, this);
                 }
 
                 var possibleDistance = Speed * deltaTime / 1000 * SpeedMulti;
@@ -159,6 +169,18 @@ namespace CityGame.Classes.Entities
                 Vector2 travelFinal = direction * finalDistance;
                 X += travelFinal.X;
                 Y += travelFinal.Y;
+            } else
+            {
+                if (Math.Round(Rotation) == 0 || Math.Round(Rotation) == 90)
+                {
+                    if (!OccupiedTilesFill.ContainsKey(myTile)) OccupiedTilesFill.Add(myTile, this);
+                    if (!OccupiedTilesFill2.ContainsKey(myTile) && fullBlock) OccupiedTilesFill2.Add(myTile, this);
+                }
+                if (Math.Round(Rotation) == 180 || Math.Round(Rotation) == 270)
+                {
+                    if (!OccupiedTilesFill2.ContainsKey(myTile)) OccupiedTilesFill2.Add(myTile, this);
+                    if (!OccupiedTilesFill.ContainsKey(myTile) && fullBlock) OccupiedTilesFill.Add(myTile, this);
+                }
             }
         }
     }

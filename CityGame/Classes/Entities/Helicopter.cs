@@ -1,6 +1,7 @@
 ﻿using CityGame.Classes.Rendering;
 using CityGame.Classes.World;
 using Microsoft.Xna.Framework;
+using Microsoft.Xna.Framework.Audio;
 using System;
 using WPFGame;
 
@@ -19,8 +20,17 @@ namespace CityGame.Classes.Entities
         public ISelectable Target;
         bool Move;
         public LightSource Spotlight;
+        SoundEffectInstance Sound;
+        AudioEmitter emitter;
         public override OCanvas Render()
         {
+            Sound = Window.GetSound("helicopter").CreateInstance();
+            Sound.IsLooped = true;
+            
+
+            emitter = new AudioEmitter { Position = new Vector3(X, Y, 25) };
+            Sound.Apply3D(MainWindow.SoundEffectListener, emitter);
+
             OCanvas canvas = new OCanvas();
             Heli1 = new SourcedImage("Helicopter.png");
             Heli2 = new SourcedImage("HelicopterFlight.png");
@@ -52,9 +62,11 @@ namespace CityGame.Classes.Entities
         public override void Tick(long deltaTime)
         {
             if (Heli1 is null) return;
+            emitter.Position = new Vector3(X, Y, 25);
             Tile myTile = MainWindow.Grid[(int)(X / MainWindow.TileSize), (int)(Y / MainWindow.TileSize)];
             if (myTile.Type != TileType.Helipad)
             {
+                //if (Sound.State == SoundState.Paused || Sound.State == SoundState.Stopped) Sound.Play();
                 Spotlight.Visible = true;
                 Heli2.Visible = true;
                 Heli1.Visible = false;
@@ -71,6 +83,7 @@ namespace CityGame.Classes.Entities
                 }
             } else
             {
+                if (Sound.State == SoundState.Playing) Sound.Pause();
                 Spotlight.Visible = false;
                 Blades1.Visible = true;
                 Blades2.Visible = false;
