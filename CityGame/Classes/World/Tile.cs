@@ -1,4 +1,7 @@
-﻿namespace CityGame
+﻿using CityGame.Classes.Rendering;
+using WPFGame;
+
+namespace CityGame.Classes.World
 {
     public struct Tile : ISelectable
     {
@@ -6,6 +9,7 @@
         public TileType Type;
         public int X;
         public int Y;
+        public UIElement Element;
 
         public OCanvas GetImage()
         {
@@ -25,6 +29,10 @@
         int ISelectable.Y()
         {
             return Y * MainWindow.TileSize;
+        }
+        public override string ToString()
+        {
+            return Type.ToString() + " at " + X + ";" + Y;
         }
     }
 }

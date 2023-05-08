@@ -1,4 +1,7 @@
-﻿namespace CityGame
+﻿using CityGame.Classes.Rendering;
+using CityGame.Classes.World;
+
+namespace CityGame.Classes.Entities
 {
     public abstract class Entity : ISelectable
     {
@@ -17,10 +20,15 @@
 
         public bool RunAction(ISelectable target)
         {
-            if(this is Helicopter heli)
+            if (this is Helicopter heli)
             {
                 heli.Target = target;
                 return true;
+            }
+            if(this is PoliceCar car)
+            {
+                car.Path = null;
+                car.Target = target;
             }
             return false;
         }

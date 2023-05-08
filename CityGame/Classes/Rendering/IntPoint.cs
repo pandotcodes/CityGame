@@ -1,4 +1,4 @@
-﻿namespace CityGame
+﻿namespace CityGame.Classes.Rendering
 {
     public struct IntPoint
     {

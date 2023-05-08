@@ -1,6 +1,6 @@
 ﻿using WPFGame;
 
-namespace CityGame
+namespace CityGame.Classes.Rendering
 {
     public class OCanvas : Canvas
     {

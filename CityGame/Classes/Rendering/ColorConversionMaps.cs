@@ -4,7 +4,7 @@ using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 
-namespace CityGame
+namespace CityGame.Classes.Rendering
 {
     public class ColorConversionMaps
     {
@@ -34,7 +34,7 @@ namespace CityGame
                 { "#616161", "#816161" },
                 { "#3b3b3b", "#5b3b3b" }
             };
-        public static  Dictionary<string, string> HouseToBuildingGreenMap = new Dictionary<string, string>
+        public static Dictionary<string, string> HouseToBuildingGreenMap = new Dictionary<string, string>
             {
                 { "#616161", "#618161" },
                 { "#3b3b3b", "#3b5b3b" }
@@ -61,5 +61,17 @@ namespace CityGame
                 { "#00000000", "#00b36b00" },
                 { "#616161", "#303030" }
             };
+        public static Dictionary<string, string> CarToNPCCar = new Dictionary<string, string>()
+        {
+            { "#ff0000", "#888888" },
+            { "#fc4141", "#fcfcfc" },
+            { "#b80000", "#b8b8b8" }
+        };
+        public static Dictionary<string, string> CarToPoliceCar = new Dictionary<string, string>()
+        {
+            { "#ff0000", "#0000ff" },
+            { "#fc4141", "#4141fc" },
+            { "#b80000", "#0000b8" }
+        };
     }
 }

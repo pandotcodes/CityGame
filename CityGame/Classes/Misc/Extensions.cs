@@ -22,5 +22,9 @@ namespace CityGame
         {
             return Math.Round(A) == Math.Round(B);
         }
+        public static bool CloselyEquals(this int A, int B)
+        {
+            return A == B;
+        }
     }
 }

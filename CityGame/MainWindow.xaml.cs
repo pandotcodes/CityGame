@@ -1,12 +1,17 @@
 ﻿using AStar;
 using AStar.Options;
+using CityGame.Classes.Entities;
+using CityGame.Classes.Rendering;
+using CityGame.Classes.World;
 using Microsoft.Xna.Framework;
 using Microsoft.Xna.Framework.Input;
 using SimplexNoise;
 using System;
 using System.Collections.Generic;
 using System.Diagnostics;
+using System.Globalization;
 using System.Linq;
+using System.Speech.Synthesis;
 using WPFGame;
 
 namespace CityGame
@@ -20,22 +25,21 @@ namespace CityGame
     {
         public ISelectable GetSelectableFromClick(MouseState click)
         {
-            Point point = new Point(click.X, click.Y);
-            point.X -= (int)Canvas.GetLeft(CameraCanvas);
-            point.Y -= (int)Canvas.GetTop(CameraCanvas);
-            point.X = (int)(point.X / CameraCanvas.ScaleX);
-            point.Y = (int)(point.Y / CameraCanvas.ScaleY);
+            Vector2 point = new Vector2(click.X, click.Y);
+
+            point = Vector2.Transform(point, InvCamera);
 
             foreach (Entity entity in Entities)
             {
                 double diff = new Vector2((int)entity.X + TileSize / 2 - point.X, (int)entity.Y + TileSize / 2 - point.Y).Length();
                 if (diff < TileSize / 2) return entity;
             }
-            int x = point.X / TileSize;
-            int y = point.Y / TileSize;
+            int x = (int)(point.X / TileSize);
+            int y = (int)(point.Y / TileSize);
             if (x < 0 || y < 0) return null;
             if (x > Grid.GetLength(0) - 1 || y > Grid.GetLength(1) - 1) return null;
 
+            Debug.WriteLine(Grid[x, y]);
             return Grid[x, y];
         }
         public static Entity GetEntityFromImage(Image image)
@@ -55,7 +59,7 @@ namespace CityGame
         }
         public static Random random;
         public static bool MouseIsDown = false;
-        public static Point MousePos = new Point(0, 0);
+        public static Vector2 MousePos = new Vector2(0, 0);
         public static PathFinder pathfinder;
         public static short[,] pathfindingGrid;
         public static short[,] pathfindingGridDesperate;
@@ -68,7 +72,7 @@ namespace CityGame
 
         Canvas MainCanvas = new OCanvas();
         Canvas BGCanvas = new OCanvas();
-        Canvas GameCanvas = new OCanvas();
+        internal static Canvas GameCanvas = new OCanvas();
         Canvas CameraCanvas = new OCanvas();
         Canvas UICanvas = new OCanvas();
         public MainWindow()
@@ -98,6 +102,8 @@ namespace CityGame
             ImageConverter.ChangeColor("ParkingLot", "ParkingLotGreen", ColorConversionMaps.HouseToBuildingGreenMap);
 
             ImageConverter.ChangeColor("Error", "ErrorRed", new Dictionary<string, string> { { "#000000", "#ff0000" } });
+            ImageConverter.ChangeColor("Car", "NPCCar", ColorConversionMaps.CarToNPCCar);
+            ImageConverter.ChangeColor("Car", "PoliceCar", ColorConversionMaps.CarToPoliceCar);
             #endregion
 
             int seed = 8;
@@ -285,24 +291,6 @@ namespace CityGame
                     startPoint += step;
                 }
             }
-            for (int y = 0; y < doubleHeight; y++)
-            {
-                for (int x = 0; x < doubleWidth; x++)
-                {
-                    var type = IntermediateGrid[x, y].Type;
-                    bool walkable = ((int)type) / 100 == 4;
-                    pathfindingGridDesperate[y, x] = (short)(walkable ? 1 : 0);
-                    if (type == TileType.Path) walkable = false;
-                    pathfindingGrid[y, x] = (short)(walkable ? 1 : 0);
-                    if (type == TileType.Bridge) bridgeTiles.Add(IntermediateGrid[x, y]);
-                    if (type == TileType.Road) roadTiles.Add(IntermediateGrid[x, y]);
-                    if (type == TileType.Road || type == TileType.Bridge) npcWalkable.Add(IntermediateGrid[x, y]);
-                }
-            }
-
-            var worldGrid = new WorldGrid(pathfindingGrid);
-            pathfinder = new PathFinder(worldGrid, new PathFinderOptions { PunishChangeDirection = true, UseDiagonals = false, SearchLimit = int.MaxValue, HeuristicFormula = AStar.Heuristics.HeuristicFormula.Euclidean });
-
             #endregion
 
             Grid = IntermediateGrid;
@@ -336,6 +324,7 @@ namespace CityGame
                 for (int y = 0; y < mapHeight; y++)
                 {
                     Canvas image = Renderer.Render(Grid[x, y].Type, x, y, Grid);
+                    Grid[x, y].Element = image;
 
                     Canvas.SetLeft(image, x * tileSize);
                     Canvas.SetTop(image, y * tileSize);
@@ -347,6 +336,24 @@ namespace CityGame
                     GameCanvas.Children.Add(image);
                 }
             }
+            for (int y = 0; y < doubleHeight; y++)
+            {
+                for (int x = 0; x < doubleWidth; x++)
+                {
+                    var type = IntermediateGrid[x, y].Type;
+                    bool walkable = ((int)type) / 100 == 4;
+                    pathfindingGridDesperate[y, x] = (short)(walkable ? 1 : 0);
+                    if (type == TileType.Path) walkable = false;
+                    pathfindingGrid[y, x] = (short)(walkable ? 1 : 0);
+                    if (type == TileType.Bridge) bridgeTiles.Add(IntermediateGrid[x, y]);
+                    if (type == TileType.Road) roadTiles.Add(IntermediateGrid[x, y]);
+                    if (type == TileType.Road || type == TileType.Bridge) npcWalkable.Add(IntermediateGrid[x, y]);
+                }
+            }
+
+            var worldGrid = new WorldGrid(pathfindingGrid);
+            pathfinder = new PathFinder(worldGrid, new PathFinderOptions { PunishChangeDirection = true, UseDiagonals = false, SearchLimit = int.MaxValue, HeuristicFormula = AStar.Heuristics.HeuristicFormula.Euclidean });
+
 
             foreach (Image image in SourcedImage.GetObjectsBySourceFile("Helipad.png"))
             {
@@ -354,6 +361,14 @@ namespace CityGame
                 float y = (float)Canvas.GetTop(image.Parent);
 
                 Entities.Add(new Helicopter { X = x, Y = y });
+            }
+
+            foreach (Image image in SourcedImage.GetObjectsBySourceFile("Garage.png"))
+            {
+                float x = (float)Canvas.GetLeft(image.Parent);
+                float y = (float)Canvas.GetTop(image.Parent);
+
+                Entities.Add(new PoliceCar { X = x, Y = y });
             }
 
             for (int n = 0; n < NPCCount; n++)
@@ -364,12 +379,12 @@ namespace CityGame
 
                 car.Point = new Point(startTile.X, startTile.Y);
 
-                car.Target = new Point(targetTile.X, targetTile.Y);
+                car.Target = targetTile;
 
                 Car.CarEvent reset = car =>
                 {
                     Tile targetTile = npcWalkable[random.Next(0, npcWalkable.Count)];
-                    car.Target = new Point(targetTile.X, targetTile.Y);
+                    car.Target = targetTile;
                 };
 
                 car.JourneyFinished += reset;
@@ -381,18 +396,22 @@ namespace CityGame
             Show();
         }
         int swv;
+        protected override Color SkyColor(long SpeedFactor)
+        {
+            return base.SkyColor(180);
+        }
         protected override void Update(GameTime time)
         {
             MouseState state = Mouse.GetState();
 
             if (state.MiddleButton == ButtonState.Pressed)
             {
-                var newpos = new Point(state.X, state.Y);
+                var newpos = new Vector2(state.X, state.Y);
                 var diff = newpos - MousePos;
-                Canvas.SetLeft(CameraCanvas, Canvas.GetLeft(CameraCanvas) + diff.X);
-                Canvas.SetTop(CameraCanvas, Canvas.GetTop(CameraCanvas) + diff.Y);
+                diff /= CameraZoom;
+                CameraPosition += diff;
             }
-            MousePos = new Point(state.X, state.Y);
+            MousePos = new Vector2(state.X, state.Y);
 
 
             float delta = state.ScrollWheelValue - swv;
@@ -406,8 +425,7 @@ namespace CityGame
 
             if (delta != 0)
             {
-                CameraCanvas.ScaleX *= multi;
-                CameraCanvas.ScaleY *= multi;
+                CameraZoom *= multi;
             }
 
             if (state.LeftButton == ButtonState.Pressed)
@@ -444,8 +462,11 @@ namespace CityGame
                 entity.Object.Rotation = (int)entity.Rotation;
                 Canvas.SetLeft(entity.Object, entity.X);
                 Canvas.SetTop(entity.Object, entity.Y);
-
             }
+            Car.OccupiedTiles = Car.OccupiedTilesFill;
+            Car.OccupiedTilesFill = new Dictionary<Tile, Car>();
+            Car.OccupiedTiles2 = Car.OccupiedTilesFill2;
+            Car.OccupiedTilesFill2 = new Dictionary<Tile, Car>();
         }
     }
 }

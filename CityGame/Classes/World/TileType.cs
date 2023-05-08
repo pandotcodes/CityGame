@@ -1,9 +1,10 @@
-﻿namespace CityGame
+﻿namespace CityGame.Classes.World
 {
     public enum TileType
     {
         Skyscraper = 100,
         House = 101,
+        Helipad = 102,
 
         Park = 220,
 
@@ -14,6 +15,7 @@
         Path = 421,
         Highway = 402,
         Bridge = 410,
-        HighwayBridge = 411
+        HighwayBridge = 411,
+        Garage = 430
     }
 }

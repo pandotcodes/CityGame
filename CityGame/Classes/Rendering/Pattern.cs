@@ -1,7 +1,8 @@
 ﻿using System;
 using System.Linq;
+using CityGame.Classes.World;
 
-namespace CityGame
+namespace CityGame.Classes.Rendering
 {
     public class Pattern
     {

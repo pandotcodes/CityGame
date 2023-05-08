@@ -3,7 +3,7 @@ using System.Collections.Generic;
 using System.IO;
 using System.Linq;
 
-namespace CityGame
+namespace CityGame.Classes.Rendering
 {
     public class ImageConverter
     {
@@ -15,7 +15,7 @@ namespace CityGame
             if (!File.Exists(srcFile)) return;
 
             Dictionary<System.Drawing.Color, System.Drawing.Color> Conversions = conversions.Select(x => new KeyValuePair<System.Drawing.Color, System.Drawing.Color>(System.Drawing.ColorTranslator.FromHtml(x.Key), System.Drawing.ColorTranslator.FromHtml(x.Value))).ToDictionary(x => x.Key, x => x.Value);
-            System.Drawing.Bitmap bmp = (System.Drawing.Bitmap)System.Drawing.Bitmap.FromFile(srcFile);
+            System.Drawing.Bitmap bmp = (System.Drawing.Bitmap)System.Drawing.Image.FromFile(srcFile);
             for (int x = 0; x < bmp.Width; x++)
             {
                 for (int y = 0; y < bmp.Height; y++)

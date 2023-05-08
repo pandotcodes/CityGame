@@ -1,4 +1,6 @@
-﻿namespace CityGame
+﻿using CityGame.Classes.Rendering;
+
+namespace CityGame.Classes.World
 {
     public interface ISelectable
     {
