@@ -7,6 +7,8 @@ Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "CityGame", "CityGame\CityGa
 EndProject
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "WPFGame", "..\WPFGame\WPFGame\WPFGame.csproj", "{4F2DC7EE-24BA-4383-9AB6-EBA46EB191DF}"
 EndProject
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "MGUI", "..\..\RE-UI-a-Monogame-GUI\MGUI\MGUI.csproj", "{BEEAE3E9-28E8-4052-90FC-1A84E40526F6}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU
@@ -21,6 +23,10 @@ Global
 		{4F2DC7EE-24BA-4383-9AB6-EBA46EB191DF}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{4F2DC7EE-24BA-4383-9AB6-EBA46EB191DF}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{4F2DC7EE-24BA-4383-9AB6-EBA46EB191DF}.Release|Any CPU.Build.0 = Release|Any CPU
+		{BEEAE3E9-28E8-4052-90FC-1A84E40526F6}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{BEEAE3E9-28E8-4052-90FC-1A84E40526F6}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{BEEAE3E9-28E8-4052-90FC-1A84E40526F6}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{BEEAE3E9-28E8-4052-90FC-1A84E40526F6}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE

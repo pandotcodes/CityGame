@@ -3,17 +3,17 @@ using CityGame.Classes.World;
 using Microsoft.Xna.Framework;
 using System;
 using System.Collections.Generic;
-using System.Diagnostics.Eventing.Reader;
+using System.Diagnostics;
 using System.Linq;
-using System.Runtime.ConstrainedExecution;
-using System.Windows;
 using WPFGame;
 
 namespace CityGame.Classes.Entities
 {
     public class Car : Entity
     {
-        public bool desperate = false;
+        public int grid = 1;
+        public long TimeUntilReroute = 5000;
+        protected long RerouteTimePassed = 0;
         public static List<Car> Cars = new List<Car>();
         public delegate void CarEvent(Car car);
         public event CarEvent JourneyFinished;
@@ -44,6 +44,7 @@ namespace CityGame.Classes.Entities
         protected ColoredRectangle debugRect;
         protected Tile lastTile;
         protected List<LightSource> lights = new List<LightSource>();
+        protected LightSource PointLight;
         public override OCanvas Render()
         {
             OCanvas canvas = new OCanvas();
@@ -73,6 +74,12 @@ namespace CityGame.Classes.Entities
             lights.Add(blight);
             lights.Add(blight2);
 
+            PointLight = new LightSource { Type = LightSourceType.PointLight, Color = Color.White, Radius = 24, Angle = 24, RotationOrigin = new Point(MainWindow.TileSize / 2, MainWindow.TileSize / 2) };
+            Canvas.SetLeft(PointLight, 43);
+            Canvas.SetTop(PointLight, 32);
+
+            canvas.Children.Add(PointLight);
+
             return canvas;
         }
         public Car()
@@ -80,7 +87,9 @@ namespace CityGame.Classes.Entities
             Cars.Add(this);
             JourneyFinished += c => { };
             JourneyImpossible += c => { };
+            Move += c => { };
         }
+        public event CarEvent Move;
 
         public override void Tick(long deltaTime)
         {
@@ -92,11 +101,12 @@ namespace CityGame.Classes.Entities
                 new Tuple<TileType, string>(TileType.Road, "1"),
                 new Tuple<TileType, string>(TileType.Garage, null)
             };
+            if (this == MainWindow.Selected) Debug.WriteLine("Selected.");
             Tile myTile = MainWindow.Grid[Point.X, Point.Y];
             bool fullBlock = fullBlockTiles.Any(x => (x.Item1 == myTile.Type || (x.Item1 == TileType.Road && (myTile.Type == TileType.Path || myTile.Type == TileType.Highway || myTile.Type == TileType.Bridge || myTile.Type == TileType.HighwayBridge))) && (x.Item2 == myTile.Pattern.PatternCode || x.Item2 is null));
             if (myTile.Type == TileType.Garage)
             {
-                Rotation = ((Canvas)myTile.Element).Children[1].Rotation-90;
+                Rotation = ((Canvas)myTile.Element).Children[1].Rotation - 90;
                 lights.ForEach(x => x.Visible = false);
             }
             else lights.ForEach(x => x.Visible = true);
@@ -106,10 +116,11 @@ namespace CityGame.Classes.Entities
                 if (Path is null)
                 {
                     var pf = MainWindow.pathfinder;
-                    if (desperate) pf = MainWindow.pathfinderDesperate;
+                    if (grid == 2) pf = MainWindow.pathfinderDesperate;
                     Path = pf.FindPath(Point.Convert(), new Point((int)(Target.X() / MainWindow.TileSize), (int)(Target.Y() / MainWindow.TileSize)).Convert()).Select(x => x.Convert()).ToArray();
                     NextTarget = 0;
                 }
+                if(new Point(Target.X() / 64, Target.Y() / 64) != Point) Move(this);
                 if (Path.Length == 0)
                 {
                     JourneyImpossible(this);
@@ -150,18 +161,40 @@ namespace CityGame.Classes.Entities
                 float degrees = (float)(Math.Atan2(direction.Y, direction.X) * (180 / Math.PI)) + 90;
                 Rotation = degrees;
                 Tile targetTile = MainWindow.Grid[nextTarget.X, nextTarget.Y];
+                Car blockingCar = null;
 
                 if (Math.Round(Rotation) == 0 || Math.Round(Rotation) == 90)
                 {
                     if (!OccupiedTilesFill.ContainsKey(myTile)) OccupiedTilesFill.Add(myTile, this);
                     if (!OccupiedTilesFill2.ContainsKey(myTile) && fullBlock) OccupiedTilesFill2.Add(myTile, this);
-                    if (OccupiedTiles.ContainsKey(targetTile) && OccupiedTiles[targetTile] != this) SpeedMulti = 0;
+                    if (OccupiedTiles.ContainsKey(targetTile) && OccupiedTiles[targetTile] != this)
+                    {
+                        SpeedMulti = 0;
+                        blockingCar = OccupiedTiles[targetTile];
+                    }
                 }
                 if (Math.Round(Rotation) == 180 || Math.Round(Rotation) == 270)
                 {
                     if (!OccupiedTilesFill2.ContainsKey(myTile)) OccupiedTilesFill2.Add(myTile, this);
-                    if (OccupiedTiles2.ContainsKey(targetTile) && OccupiedTiles2[targetTile] != this) SpeedMulti = 0;
                     if (!OccupiedTilesFill.ContainsKey(myTile) && fullBlock) OccupiedTilesFill.Add(myTile, this);
+                    if (OccupiedTiles2.ContainsKey(targetTile) && OccupiedTiles2[targetTile] != this)
+                    {
+                        SpeedMulti = 0;
+                        blockingCar = OccupiedTiles2[targetTile];
+                    }
+                }
+
+                if (SpeedMulti == 0 && blockingCar is not null)
+                {
+                    RerouteTimePassed += deltaTime;
+                    if (RerouteTimePassed > TimeUntilReroute)
+                    {
+                        var resetFunc = MainWindow.UpdatePathfinding(targetTile, 0, 3);
+                        blockingCar.Move += resetFunc;
+                    }
+                } else
+                {
+                    RerouteTimePassed = 0;
                 }
 
                 var possibleDistance = Speed * deltaTime / 1000 * SpeedMulti;
@@ -169,7 +202,8 @@ namespace CityGame.Classes.Entities
                 Vector2 travelFinal = direction * finalDistance;
                 X += travelFinal.X;
                 Y += travelFinal.Y;
-            } else
+            }
+            else
             {
                 if (Math.Round(Rotation) == 0 || Math.Round(Rotation) == 90)
                 {

@@ -10,16 +10,12 @@ using SimplexNoise;
 using System;
 using System.Collections.Generic;
 using System.Diagnostics;
-using System.Globalization;
 using System.Linq;
-using System.Speech.Synthesis;
-using System.Speech.Synthesis.TtsEngine;
 using WPFGame;
+using static CityGame.Classes.Entities.Car;
 
 namespace CityGame
 {
-
-    public class Program { public static void Main() { new MainWindow(); } }
     /// <summary>
     /// Interaction logic for MainWindow.xaml
     /// </summary>
@@ -64,10 +60,10 @@ namespace CityGame
         public static Vector2 MousePos = new Vector2(0, 0);
         public static PathFinder pathfinder;
         public static PathFinder pathfinderDesperate;
-        public static short[,] pathfindingGrid;
-        public static short[,] pathfindingGridDesperate;
+        public static Dictionary<int, short[,]> Grids = new Dictionary<int, short[,]>();
+        public static Dictionary<int, WorldGrid> WorldGrids = new Dictionary<int, WorldGrid>();
         public static List<Tile> npcWalkable = new List<Tile>();
-        public static List<Entity> Entities { get; set; } = new List<Entity>();
+        public static List<Entity> Entities { get; set; }
         public const int TileSize = 64;
         public static Tile[,] Grid;
         public static ISelectable Selected;
@@ -79,9 +75,63 @@ namespace CityGame
         Canvas CameraCanvas = new OCanvas();
         Canvas UICanvas = new OCanvas();
 
+        /// <summary>
+        /// Updates the pathfinding grids of all grid numbers includes in the "grids" parameter
+        /// </summary>
+        /// <param name="tile">The tile to update</param>
+        /// <param name="value">The value to update the tile to</param>
+        /// <param name="grids">The grids to perform the update for</param>
+        /// <returns>A function that should be called once the reason for the update has resolved</returns>
+        public static CarEvent UpdatePathfinding(Tile tile, short value, int grids = 3, params Car[] exclude)
+        {
+            Dictionary<int, short> resetValues = new Dictionary<int, short>();
+            foreach (var kvp in Grids)
+            {
+                if ((grids & kvp.Key) == kvp.Key)
+                {
+                    resetValues[kvp.Key] = kvp.Value[tile.Y, tile.X];
+                    kvp.Value[tile.Y, tile.X] = value;
+                    WorldGrids[kvp.Key][tile.Y, tile.X] = value;
+                }
+            }
+
+            bool hasExecuted = false;
+            object lockObject = new object();
+            CarEvent resetFunc = (Car exclude) =>
+            {
+                lock (lockObject)
+                {
+                    if (!hasExecuted)
+                    {
+                        hasExecuted = true;
+
+                        foreach (var kvp in Grids)
+                        {
+                            if ((grids & kvp.Key) == kvp.Key)
+                            {
+                                UpdatePathfinding(tile, resetValues[kvp.Key], kvp.Key, exclude);
+                            }
+                        }
+                    }
+                }
+            };
+
+            InstantiatePathfinders();
+            Car.Cars.ForEach(car => car.Path = !exclude.Contains(car) && (grids & car.grid) == car.grid ? null : car.Path);
+
+            return resetFunc;
+        }
+        public static void InstantiatePathfinders()
+        {
+            pathfinder = new PathFinder(WorldGrids[1], new PathFinderOptions { PunishChangeDirection = true, UseDiagonals = false, SearchLimit = int.MaxValue, HeuristicFormula = AStar.Heuristics.HeuristicFormula.Euclidean });
+            pathfinderDesperate = new PathFinder(WorldGrids[2], new PathFinderOptions { PunishChangeDirection = true, UseDiagonals = false, SearchLimit = int.MaxValue, HeuristicFormula = AStar.Heuristics.HeuristicFormula.Euclidean });
+        }
+
         public static AudioListener SoundEffectListener;
         public MainWindow()
         {
+            _graphics.PreferredBackBufferWidth = 1920;
+            _graphics.PreferredBackBufferHeight = 1080;
             AddPenumbra();
 
             #region | Texture Conversions |
@@ -116,7 +166,7 @@ namespace CityGame
             Noise.Seed = seed;
 
             int mapHeight = 100;
-            int mapWidth = 100;
+            int mapWidth = 200;
 
             float[,] lakeMap = Noise.Calc2D(mapWidth, mapHeight, 0.05f);
 
@@ -139,6 +189,7 @@ namespace CityGame
 
             int NPCCount = (int)Math.Ceiling(mapHeight * mapWidth / 100f);
             //NPCCount = 1;
+            //NPCCount = 0;
 
             random = new Random(seed);
 
@@ -223,8 +274,8 @@ namespace CityGame
                 }
             }
             Dictionary<int, bool> decidedBridges = new Dictionary<int, bool>();
-            pathfindingGrid = new short[doubleWidth, doubleHeight];
-            pathfindingGridDesperate = new short[doubleWidth, doubleHeight];
+            Grids.Add(1, new short[doubleHeight, doubleWidth]);
+            Grids.Add(2, new short[doubleHeight, doubleWidth]);
             List<Tile> bridgeTiles = new List<Tile>();
             List<Tile> roadTiles = new List<Tile>();
             for (int y = 0; y < doubleHeight; y++)
@@ -347,19 +398,19 @@ namespace CityGame
                 {
                     var type = IntermediateGrid[x, y].Type;
                     bool walkable = ((int)type) / 100 == 4;
-                    pathfindingGridDesperate[y, x] = (short)(walkable ? 1 : 0);
+                    Grids[2][y, x] = (short)(walkable ? 1 : 0);
                     if (type == TileType.Path) walkable = false;
-                    pathfindingGrid[y, x] = (short)(walkable ? 1 : 0);
+                    Grids[1][y, x] = (short)(walkable ? 1 : 0);
                     if (type == TileType.Bridge) bridgeTiles.Add(IntermediateGrid[x, y]);
                     if (type == TileType.Road) roadTiles.Add(IntermediateGrid[x, y]);
                     if (type == TileType.Road || type == TileType.Bridge) npcWalkable.Add(IntermediateGrid[x, y]);
                 }
             }
 
-            var worldGrid = new WorldGrid(pathfindingGrid);
-            pathfinder = new PathFinder(worldGrid, new PathFinderOptions { PunishChangeDirection = true, UseDiagonals = false, SearchLimit = int.MaxValue, HeuristicFormula = AStar.Heuristics.HeuristicFormula.Euclidean });
-            var worldGridDesperate = new WorldGrid(pathfindingGridDesperate);
-            pathfinderDesperate = new PathFinder(worldGridDesperate, new PathFinderOptions { PunishChangeDirection = true, UseDiagonals = false, SearchLimit = int.MaxValue, HeuristicFormula = AStar.Heuristics.HeuristicFormula.Euclidean });
+            foreach (var kvp in Grids) WorldGrids.Add(kvp.Key, new WorldGrid(kvp.Value));
+            InstantiatePathfinders();
+
+            Entities = new List<Entity>();
 
             foreach (Image image in SourcedImage.GetObjectsBySourceFile("Helipad.png"))
             {

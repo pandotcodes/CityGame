@@ -9,7 +9,7 @@ namespace CityGame.Classes.Entities
 {
     public class Helicopter : Entity
     {
-        public float Speed { get; set; } = 256;
+        public float Speed { get; set; } = 512;
         public float RotSpeed { get; set; } = 1;
         public bool Landed = false;
         Image Heli1;
@@ -93,6 +93,7 @@ namespace CityGame.Classes.Entities
             if (Target is not null)
             {
                 Vector2 nextTarget = new Vector2(Target.X(), Target.Y());
+                if (Target is Tile) nextTarget += new Vector2(1, 1);
                 if (Target is Car car)
                 {
                     var correctionvector = new Vector2((float)Math.Cos(MathHelper.ToRadians(car.Rotation)), (float)Math.Sin(MathHelper.ToRadians(car.Rotation)));

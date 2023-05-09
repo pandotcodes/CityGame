@@ -1,18 +1,17 @@
 ﻿using CityGame.Classes.Rendering;
+using CityGame.Classes.World;
 using Microsoft.Xna.Framework;
 using System;
 using System.Collections.Generic;
-using WPFGame;
 
 namespace CityGame.Classes.Entities
 {
     public class PoliceCar : Car
     {
         public static List<PoliceCar> PCars = new List<PoliceCar>();
-        protected LightSource sirenLight;
         public PoliceCar() : base()
         {
-            desperate = true;
+            grid = 2;
             PCars.Add(this);
             Speed = 192;
             PNGFile = "PoliceCar.png";
@@ -21,25 +20,26 @@ namespace CityGame.Classes.Entities
         {
             OCanvas canvas = base.Render();
 
-            sirenLight = new LightSource { Radius = 24, Angle = 24, Intensity = 4f, Color = Color.Red, Type = LightSourceType.PointLight, RotationOrigin = new Point(MainWindow.TileSize / 2) };
-            canvas.Children.Add(sirenLight);
-            lights.Add(sirenLight);
-            Canvas.SetLeft(sirenLight, 43);
-            Canvas.SetTop(sirenLight, 32);
-
             return canvas;
         }
         public override void Tick(long deltaTime)
         {
-            if (sirenLight is null) return;
+            if (PointLight is null) return;
             long ms = DateTime.Now.Ticks / TimeSpan.TicksPerMillisecond;
-            if (ms / 250 % 2 == 0)
+            Tile myTile = MainWindow.Grid[Point.X, Point.Y]; if (myTile.Type == TileType.Garage)
             {
-                sirenLight.Color = Color.Red;
+                PointLight.Color = Color.White;
             }
             else
             {
-                sirenLight.Color = Color.Blue;
+                if (ms / 250 % 2 == 0)
+                {
+                    PointLight.Color = Color.Red;
+                }
+                else
+                {
+                    PointLight.Color = Color.Blue;
+                }
             }
 
             base.Tick(deltaTime);

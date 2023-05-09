@@ -9,15 +9,13 @@
 
   <ItemGroup>
     <PackageReference Include="AStarLite" Version="1.1.0" />
-    <PackageReference Include="Microsoft.HLSL.CSharpVB" Version="1.0.2" />
     <PackageReference Include="NAudio" Version="2.1.0" />
     <PackageReference Include="NAudio.Lame" Version="2.0.1" />
     <PackageReference Include="SimplexNoise" Version="2.0.0" />
-    <PackageReference Include="System.Drawing.Common" Version="7.0.0" />
-    <PackageReference Include="System.Speech" Version="7.0.0" />
   </ItemGroup>
 
   <ItemGroup>
+    <ProjectReference Include="..\..\..\RE-UI-a-Monogame-GUI\MGUI\MGUI.csproj" />
     <ProjectReference Include="..\..\WPFGame\WPFGame\WPFGame.csproj" />
   </ItemGroup>
 
@@ -37,6 +35,21 @@
   </ItemGroup>
 
   <ItemGroup>
+    <None Update="Licenses\ASTARLITE-LICENSE.txt">
+      <CopyToOutputDirectory>Always</CopyToOutputDirectory>
+    </None>
+    <None Update="Licenses\LAME-LICENSE.txt">
+      <CopyToOutputDirectory>Always</CopyToOutputDirectory>
+    </None>
+    <None Update="Licenses\NAUDIO-LICENSE.txt">
+      <CopyToOutputDirectory>Always</CopyToOutputDirectory>
+    </None>
+    <None Update="Licenses\RE-UI-LICENSE.txt">
+      <CopyToOutputDirectory>Always</CopyToOutputDirectory>
+    </None>
+    <None Update="Licenses\SIMPLEXNOISE-LICENSE.htm">
+      <CopyToOutputDirectory>Always</CopyToOutputDirectory>
+    </None>
     <None Update="Resources\Building0.png">
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
     </None>

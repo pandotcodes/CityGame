@@ -1,6 +1,4 @@
-﻿using System;
-using System.IO;
-/*
+﻿/*
 namespace CityGame
 {
     public class CustomShader : ShaderEffect
