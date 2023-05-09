@@ -15,8 +15,13 @@
   </ItemGroup>
 
   <ItemGroup>
-    <ProjectReference Include="..\..\RE-UI-a-Monogame-GUI\MGUI\MGUI.csproj" />
     <ProjectReference Include="..\..\WPFGame\WPFGame\WPFGame.csproj" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <Reference Include="MGUI">
+      <HintPath>bin\Debug\net6.0-windows\MGUI.dll</HintPath>
+    </Reference>
   </ItemGroup>
 
   <ItemGroup>
