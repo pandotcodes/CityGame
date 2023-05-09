@@ -20,6 +20,7 @@ namespace CityGame
     }
     public class GenerationSettings
     {
+        public int Seed;
         public GenerationSettings()
         {
 
