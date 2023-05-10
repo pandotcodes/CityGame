@@ -7,6 +7,13 @@ namespace CityGame.Classes.Entities
     {
         public float X { get; set; }
         public float Y { get; set; }
+        protected float visualX;
+        protected float visualY;
+        protected float visualRotation;
+        public float VisualX { get => UseVisualPosition ? visualX : X; set => X = visualX = value; }
+        public float VisualY { get => UseVisualPosition ? visualY : Y; set => Y = visualY = value; }
+        public float VisualRotation { get => UseVisualPosition ? visualRotation : Rotation; set => Rotation = visualRotation = value; }
+        public bool UseVisualPosition { get; set; }
         public float Rotation { get; set; }
         public long Time { get; set; }
         public OCanvas Object { get; set; }

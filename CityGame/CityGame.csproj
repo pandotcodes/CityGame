@@ -15,7 +15,6 @@
   </ItemGroup>
 
   <ItemGroup>
-    <ProjectReference Include="..\..\..\RE-UI-a-Monogame-GUI\MGUI\MGUI.csproj" />
     <ProjectReference Include="..\..\WPFGame\WPFGame\WPFGame.csproj" />
   </ItemGroup>
 
@@ -149,6 +148,16 @@
     <None Update="Resources\Vent3.png">
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
     </None>
+  </ItemGroup>
+
+  <ItemGroup>
+    <Folder Include="Assemblies\" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <Reference Include="MGUI">
+      <HintPath>..\..\..\RE-UI-a-Monogame-GUI\MGUI\bin\Debug\net6.0\MGUI.dll</HintPath>
+    </Reference>
   </ItemGroup>
 
 </Project>

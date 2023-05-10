@@ -5,7 +5,7 @@ namespace CityGame
 {
     public class Program { 
         public static void Main() {
-            var menu = new MenuWindow();
+            var menu = new MainWindow();
         } 
     }
     public class MenuWindow : Window

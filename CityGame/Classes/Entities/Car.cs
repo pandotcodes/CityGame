@@ -90,9 +90,13 @@ namespace CityGame.Classes.Entities
             Move += c => { };
         }
         public event CarEvent Move;
+        private int curveMode;
+        private float curveModePixelDuration;
+        private int curveModeStartedAt;
 
         public override void Tick(long deltaTime)
         {
+            //deltaTime /= 10;
             //deltaTime *= 500;
             Tuple<TileType, string>[] fullBlockTiles = new Tuple<TileType, string>[]
             {
@@ -101,7 +105,7 @@ namespace CityGame.Classes.Entities
                 new Tuple<TileType, string>(TileType.Road, "1"),
                 new Tuple<TileType, string>(TileType.Garage, null)
             };
-            if (this == MainWindow.Selected) Debug.WriteLine("Selected.");
+            //if (this == MainWindow.Selected) Debug.WriteLine("Selected.");
             Tile myTile = MainWindow.Grid[Point.X, Point.Y];
             bool fullBlock = fullBlockTiles.Any(x => (x.Item1 == myTile.Type || (x.Item1 == TileType.Road && (myTile.Type == TileType.Path || myTile.Type == TileType.Highway || myTile.Type == TileType.Bridge || myTile.Type == TileType.HighwayBridge))) && (x.Item2 == myTile.Pattern.PatternCode || x.Item2 is null));
             if (myTile.Type == TileType.Garage)
@@ -120,7 +124,7 @@ namespace CityGame.Classes.Entities
                     Path = pf.FindPath(Point.Convert(), new Point((int)(Target.X() / MainWindow.TileSize), (int)(Target.Y() / MainWindow.TileSize)).Convert()).Select(x => x.Convert()).ToArray();
                     NextTarget = 0;
                 }
-                if(new Point(Target.X() / 64, Target.Y() / 64) != Point) Move(this);
+                if (new Point(Target.X() / 64, Target.Y() / 64) != Point) Move(this);
                 if (Path.Length == 0)
                 {
                     JourneyImpossible(this);
@@ -192,14 +196,85 @@ namespace CityGame.Classes.Entities
                         var resetFunc = MainWindow.UpdatePathfinding(targetTile, 0, 3);
                         blockingCar.Move += resetFunc;
                     }
-                } else
+                }
+                else
                 {
                     RerouteTimePassed = 0;
+                }
+
+                if (Path is not null && Path.Length > NextTarget + 1 && curveMode == 0)
+                {
+                    var actPoint = Path[NextTarget + 1];
+                    var afterCurveTile = MainWindow.Grid[actPoint.X, actPoint.Y];
+                    // North
+                    if (Rotation == 0 && afterCurveTile.X == nextTarget.X - 1 && afterCurveTile.Y == nextTarget.Y) curveMode = -1; // Left
+                    else if (Rotation == 0 && afterCurveTile.X == nextTarget.X + 1 && afterCurveTile.Y == nextTarget.Y) curveMode = 1; // Right
+
+                    // East
+                    else if (Rotation == 90 && afterCurveTile.X == nextTarget.X && afterCurveTile.Y == nextTarget.Y - 1) curveMode = -1; // Left
+                    else if (Rotation == 90 && afterCurveTile.X == nextTarget.X && afterCurveTile.Y == nextTarget.Y + 1) curveMode = 1; // Right
+
+                    // South
+                    else if (Rotation == 180 && afterCurveTile.X == nextTarget.X + 1 && afterCurveTile.Y == nextTarget.Y) curveMode = -1; // Left
+                    else if (Rotation == 180 && afterCurveTile.X == nextTarget.X - 1 && afterCurveTile.Y == nextTarget.Y) curveMode = 1; // Right
+
+                    // West
+                    else if (Rotation == 270 && afterCurveTile.X == nextTarget.X && afterCurveTile.Y == nextTarget.Y + 1) curveMode = -1; // Left
+                    else if (Rotation == 270 && afterCurveTile.X == nextTarget.X && afterCurveTile.Y == nextTarget.Y - 1) curveMode = 1; // Right
+
+                    if (curveMode != 0)
+                    {
+                        curveModePixelDuration = MainWindow.TileSize * 2;
+                        curveModeStartedAt = NextTarget;
+                    }
                 }
 
                 var possibleDistance = Speed * deltaTime / 1000 * SpeedMulti;
                 var finalDistance = Math.Min(possibleDistance, travel.Length());
                 Vector2 travelFinal = direction * finalDistance;
+
+                UseVisualPosition = false;
+                if (curveMode != 0)
+                {
+                    float rotationStart = MainWindow.TileSize * 1.25f;
+                    float rotationEnd = MainWindow.TileSize * 0.75f;
+
+                    curveModePixelDuration -= travelFinal.Length();
+                    if (curveModePixelDuration <= rotationEnd) curveMode = 0;
+                    else
+                    {
+                        UseVisualPosition = true;
+
+                        if (curveModePixelDuration < rotationStart && curveModePixelDuration > rotationEnd)
+                        {
+                            float percentage = (curveModePixelDuration - rotationEnd) / (rotationStart - rotationEnd);
+                            if (this == MainWindow.Selected) Debug.WriteLine(percentage);
+                            float vRotDeg = 0;
+                            if (NextTarget == curveModeStartedAt)
+                            {
+                                float percentage2 = percentage - 0.5f;
+                                percentage2 *= 2;
+                                vRotDeg = (45 - 45 * percentage2) * curveMode;
+                            }
+                            else
+                            {
+                                float percentage2 = percentage * 2;
+                                vRotDeg = (-45 * percentage2) * curveMode;
+                            }
+                            if (this == MainWindow.Selected) Debug.WriteLine(vRotDeg);
+                            visualX = X;
+                            visualY = Y;
+                            visualRotation = Rotation + vRotDeg;
+                        }
+                        else
+                        {
+                            visualX = X;
+                            visualY = Y;
+                            visualRotation = Rotation;
+                        }
+                    }
+                }
+
                 X += travelFinal.X;
                 Y += travelFinal.Y;
             }

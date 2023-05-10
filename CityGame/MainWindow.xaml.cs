@@ -37,7 +37,7 @@ namespace CityGame
             if (x < 0 || y < 0) return null;
             if (x > Grid.GetLength(0) - 1 || y > Grid.GetLength(1) - 1) return null;
 
-            Debug.WriteLine(Grid[x, y]);
+            //Debug.WriteLine(Grid[x, y]);
             return Grid[x, y];
         }
         public static Entity GetEntityFromImage(Image image)
@@ -478,7 +478,7 @@ namespace CityGame
             swv = state.ScrollWheelValue;
             if (delta != 0)
             {
-                Debug.WriteLine(delta);
+                //Debug.WriteLine(delta);
             }
             float multi = 1.05f;
             if (delta < 0) multi = 1 / multi;
@@ -513,6 +513,7 @@ namespace CityGame
             foreach (Entity entity in Entities)
             {
                 long deltaTime = milliseconds - entity.Time;
+                deltaTime = (long)time.ElapsedGameTime.TotalMilliseconds;
                 entity.Time = milliseconds;
                 entity.Tick(deltaTime);
 
@@ -521,9 +522,9 @@ namespace CityGame
                     entity.Object = entity.Render();
                     GameCanvas.Children.Add(entity.Object);
                 }
-                entity.Object.Rotation = (int)entity.Rotation;
-                Canvas.SetLeft(entity.Object, entity.X);
-                Canvas.SetTop(entity.Object, entity.Y);
+                entity.Object.Rotation = (int)entity.VisualRotation;
+                Canvas.SetLeft(entity.Object, entity.VisualX);
+                Canvas.SetTop(entity.Object, entity.VisualY);
             }
             Car.OccupiedTiles = Car.OccupiedTilesFill;
             Car.OccupiedTilesFill = new Dictionary<Tile, Car>();
