@@ -2,10 +2,16 @@
 
   <PropertyGroup>
     <OutputType>WinExe</OutputType>
-    <TargetFramework>net6.0-windows</TargetFramework>
+    <TargetFramework>net7.0-windows</TargetFramework>
     <Nullable>enable</Nullable>
     <UseWPF>False</UseWPF>
   </PropertyGroup>
+
+  <ItemGroup>
+    <Compile Remove="Assemblies\**" />
+    <EmbeddedResource Remove="Assemblies\**" />
+    <None Remove="Assemblies\**" />
+  </ItemGroup>
 
   <ItemGroup>
     <PackageReference Include="AStarLite" Version="1.1.0" />
@@ -55,6 +61,9 @@
     <None Update="Licenses\SIMPLEXNOISE-LICENSE.htm">
       <CopyToOutputDirectory>Always</CopyToOutputDirectory>
     </None>
+    <None Update="Licenses\SIXLABORS.FONTS-LICENSE.txt">
+      <CopyToOutputDirectory>Always</CopyToOutputDirectory>
+    </None>
     <None Update="Resources\Building0.png">
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
     </None>
@@ -99,6 +108,9 @@
     </None>
     <None Update="Resources\Car.png">
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </None>
+    <None Update="Resources\CNRGN  Builder.ttf">
+      <CopyToOutputDirectory>Always</CopyToOutputDirectory>
     </None>
     <None Update="Resources\Error.png">
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
@@ -157,10 +169,6 @@
     <None Update="Resources\Vent3.png">
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
     </None>
-  </ItemGroup>
-
-  <ItemGroup>
-    <Folder Include="Assemblies\" />
   </ItemGroup>
 
   <ItemGroup>
