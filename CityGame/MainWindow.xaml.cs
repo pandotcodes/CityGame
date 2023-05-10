@@ -427,6 +427,13 @@ namespace CityGame
 
                 Entities.Add(new PoliceCar { X = x, Y = y });
             }
+            var roads = SourcedImage.GetObjectsBySourceFile("Road1.png", "Road2.png", "Road2c.png", "Road3c.png", "Road4c.png");
+            var pipeCount = NPCCount;
+            var pipeRoads = roads.OrderBy(x => random.Next(0, roads.Count)).Take(pipeCount).ToArray();
+            foreach (Image image in pipeRoads)
+            {
+                Entities.Add(new GasPipe { X = (float)Canvas.GetLeft(image.Parent), Y = (float)Canvas.GetTop(image.Parent), Rotation = image.Rotation });
+            }
 
             for (int n = 0; n < NPCCount; n++)
             {

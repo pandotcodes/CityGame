@@ -17,7 +17,7 @@ namespace CityGame.Classes.Entities
         public float Rotation { get; set; }
         public long Time { get; set; }
         public OCanvas Object { get; set; }
-
+        public  bool SingleSelect { get; set; }
         public OCanvas GetImage()
         {
             return Object;
