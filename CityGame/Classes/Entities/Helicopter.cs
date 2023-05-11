@@ -3,7 +3,8 @@ using CityGame.Classes.World;
 using Microsoft.Xna.Framework;
 using Microsoft.Xna.Framework.Audio;
 using System;
-using WPFGame;
+using OrpticonGameHelper;
+using OrpticonGameHelper.Classes.Elements;
 
 namespace CityGame.Classes.Entities
 {
@@ -32,10 +33,16 @@ namespace CityGame.Classes.Entities
             Sound.Apply3D(MainWindow.SoundEffectListener, emitter);
 
             OCanvas canvas = new OCanvas();
+            canvas.ZIndex = 100;
             Heli1 = new SourcedImage("Helicopter.png");
             Heli2 = new SourcedImage("HelicopterFlight.png");
-            Blades1 = new SourcedImage("HelicopterBlades.png");
-            Blades2 = new SourcedImage("HelicopterBlades2.png");
+            Blades1 = new SourcedImage("HelicopterBlades.png") { ZIndex = 10 };
+            Blades2 = new SourcedImage("HelicopterBlades2.png") { ZIndex = 10 };
+
+            Heli1.Effects.Add(selectedEffect);
+            Heli2.Effects.Add(selectedEffect);
+            Blades1.Effects.Add(selectedEffect);
+            Blades2.Effects.Add(selectedEffect);
 
             Heli1.Visible = false;
             Blades2.Visible = false;

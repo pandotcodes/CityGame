@@ -9,9 +9,9 @@ using Microsoft.Xna.Framework.Input;
 using SimplexNoise;
 using System;
 using System.Collections.Generic;
-using System.Diagnostics;
 using System.Linq;
-using WPFGame;
+using OrpticonGameHelper;
+using OrpticonGameHelper.Classes.Elements;
 using static CityGame.Classes.Entities.Car;
 
 namespace CityGame
@@ -502,9 +502,7 @@ namespace CityGame
                 ISelectable select = GetSelectableFromClick(state);
                 if (select is not null)
                 {
-                    if (Selected is not null) Selected.GetImage().Opacity = 1;
                     Selected = select;
-                    Selected.GetImage().Opacity = 0.5f;
                 }
             }
             else if (state.RightButton == ButtonState.Pressed)
@@ -523,6 +521,7 @@ namespace CityGame
                 deltaTime = (long)time.ElapsedGameTime.TotalMilliseconds;
                 entity.Time = milliseconds;
                 entity.Tick(deltaTime);
+                entity.BaseTick(deltaTime);
 
                 if (entity.Object is null)
                 {

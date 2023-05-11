@@ -24,7 +24,7 @@ namespace CityGame.Classes.Rendering
             int.TryParse(rotation, out int rot);
             Rotation = rot;
         }
-        public static Pattern Calculate(Tile[,] Grid, int x, int y, params TileType[] allowed)
+        public static Pattern Calculate(Tile[,] Grid, int x, int y, bool allowDiagonal = true, params TileType[] allowed)
         {
             Func<int, int, bool> IsAdjacent = (X, Y) =>
             {
@@ -33,34 +33,40 @@ namespace CityGame.Classes.Rendering
                 return allowed.Contains(Grid[X, Y].Type);
             };
 
-            if (IsAdjacent(x - 1, y - 1) && IsAdjacent(x, y - 1) && IsAdjacent(x + 1, y - 1) && IsAdjacent(x - 1, y) && IsAdjacent(x + 1, y) && IsAdjacent(x - 1, y + 1) && IsAdjacent(x, y + 1) && IsAdjacent(x + 1, y + 1)) return new Pattern("8");
+            if (allowDiagonal)
+            {
+                if (IsAdjacent(x - 1, y - 1) && IsAdjacent(x, y - 1) && IsAdjacent(x + 1, y - 1) && IsAdjacent(x - 1, y) && IsAdjacent(x + 1, y) && IsAdjacent(x - 1, y + 1) && IsAdjacent(x, y + 1) && IsAdjacent(x + 1, y + 1)) return new Pattern("8");
 
-            if (IsAdjacent(x, y - 1) && IsAdjacent(x + 1, y - 1) && IsAdjacent(x - 1, y) && IsAdjacent(x + 1, y) && IsAdjacent(x - 1, y + 1) && IsAdjacent(x, y + 1) && IsAdjacent(x + 1, y + 1)) return new Pattern("7");
-            if (IsAdjacent(x - 1, y - 1) && IsAdjacent(x, y - 1) && IsAdjacent(x - 1, y) && IsAdjacent(x + 1, y) && IsAdjacent(x - 1, y + 1) && IsAdjacent(x, y + 1) && IsAdjacent(x + 1, y + 1)) return new Pattern("7", "90");
-            if (IsAdjacent(x - 1, y - 1) && IsAdjacent(x, y - 1) && IsAdjacent(x + 1, y - 1) && IsAdjacent(x - 1, y) && IsAdjacent(x + 1, y) && IsAdjacent(x - 1, y + 1) && IsAdjacent(x, y + 1)) return new Pattern("7", "180");
-            if (IsAdjacent(x - 1, y - 1) && IsAdjacent(x, y - 1) && IsAdjacent(x + 1, y - 1) && IsAdjacent(x - 1, y) && IsAdjacent(x + 1, y) && IsAdjacent(x, y + 1) && IsAdjacent(x + 1, y + 1)) return new Pattern("7", "270");
+                if (IsAdjacent(x, y - 1) && IsAdjacent(x + 1, y - 1) && IsAdjacent(x - 1, y) && IsAdjacent(x + 1, y) && IsAdjacent(x - 1, y + 1) && IsAdjacent(x, y + 1) && IsAdjacent(x + 1, y + 1)) return new Pattern("7");
+                if (IsAdjacent(x - 1, y - 1) && IsAdjacent(x, y - 1) && IsAdjacent(x - 1, y) && IsAdjacent(x + 1, y) && IsAdjacent(x - 1, y + 1) && IsAdjacent(x, y + 1) && IsAdjacent(x + 1, y + 1)) return new Pattern("7", "90");
+                if (IsAdjacent(x - 1, y - 1) && IsAdjacent(x, y - 1) && IsAdjacent(x + 1, y - 1) && IsAdjacent(x - 1, y) && IsAdjacent(x + 1, y) && IsAdjacent(x - 1, y + 1) && IsAdjacent(x, y + 1)) return new Pattern("7", "180");
+                if (IsAdjacent(x - 1, y - 1) && IsAdjacent(x, y - 1) && IsAdjacent(x + 1, y - 1) && IsAdjacent(x - 1, y) && IsAdjacent(x + 1, y) && IsAdjacent(x, y + 1) && IsAdjacent(x + 1, y + 1)) return new Pattern("7", "270");
 
-            if (IsAdjacent(x, y - 1) && IsAdjacent(x + 1, y - 1) && IsAdjacent(x + 1, y) && IsAdjacent(x, y + 1) && IsAdjacent(x + 1, y + 1)) return new Pattern("5");
-            if (IsAdjacent(x, y - 1) && IsAdjacent(x - 1, y - 1) && IsAdjacent(x - 1, y) && IsAdjacent(x, y + 1) && IsAdjacent(x - 1, y + 1)) return new Pattern("5", "180");
-            if (IsAdjacent(x - 1, y - 1) && IsAdjacent(x, y - 1) && IsAdjacent(x + 1, y - 1) && IsAdjacent(x - 1, y) && IsAdjacent(x + 1, y)) return new Pattern("5", "270");
-            if (IsAdjacent(x - 1, y + 1) && IsAdjacent(x, y + 1) && IsAdjacent(x + 1, y + 1) && IsAdjacent(x - 1, y) && IsAdjacent(x + 1, y)) return new Pattern("5", "90");
+                if (IsAdjacent(x, y - 1) && IsAdjacent(x + 1, y - 1) && IsAdjacent(x + 1, y) && IsAdjacent(x, y + 1) && IsAdjacent(x + 1, y + 1)) return new Pattern("5");
+                if (IsAdjacent(x, y - 1) && IsAdjacent(x - 1, y - 1) && IsAdjacent(x - 1, y) && IsAdjacent(x, y + 1) && IsAdjacent(x - 1, y + 1)) return new Pattern("5", "180");
+                if (IsAdjacent(x - 1, y - 1) && IsAdjacent(x, y - 1) && IsAdjacent(x + 1, y - 1) && IsAdjacent(x - 1, y) && IsAdjacent(x + 1, y)) return new Pattern("5", "270");
+                if (IsAdjacent(x - 1, y + 1) && IsAdjacent(x, y + 1) && IsAdjacent(x + 1, y + 1) && IsAdjacent(x - 1, y) && IsAdjacent(x + 1, y)) return new Pattern("5", "90");
 
-            if (IsAdjacent(x - 1, y) && IsAdjacent(x, y - 1) && IsAdjacent(x + 1, y - 1) && IsAdjacent(x + 1, y)) return new Pattern("4");
-            if (IsAdjacent(x, y - 1) && IsAdjacent(x + 1, y) && IsAdjacent(x + 1, y + 1) && IsAdjacent(x, y + 1)) return new Pattern("4", "90");
-            if (IsAdjacent(x + 1, y) && IsAdjacent(x - 1, y) && IsAdjacent(x - 1, y + 1) && IsAdjacent(x, y + 1)) return new Pattern("4", "180");
-            if (IsAdjacent(x, y + 1) && IsAdjacent(x - 1, y) && IsAdjacent(x - 1, y - 1) && IsAdjacent(x, y - 1)) return new Pattern("4", "270");
+                if (IsAdjacent(x - 1, y) && IsAdjacent(x, y - 1) && IsAdjacent(x + 1, y - 1) && IsAdjacent(x + 1, y)) return new Pattern("4");
+                if (IsAdjacent(x, y - 1) && IsAdjacent(x + 1, y) && IsAdjacent(x + 1, y + 1) && IsAdjacent(x, y + 1)) return new Pattern("4", "90");
+                if (IsAdjacent(x + 1, y) && IsAdjacent(x - 1, y) && IsAdjacent(x - 1, y + 1) && IsAdjacent(x, y + 1)) return new Pattern("4", "180");
+                if (IsAdjacent(x, y + 1) && IsAdjacent(x - 1, y) && IsAdjacent(x - 1, y - 1) && IsAdjacent(x, y - 1)) return new Pattern("4", "270");
 
-            if (IsAdjacent(x + 1, y) && IsAdjacent(x, y - 1) && IsAdjacent(x - 1, y) && IsAdjacent(x - 1, y - 1)) return new Pattern("4m");
-            if (IsAdjacent(x, y + 1) && IsAdjacent(x + 1, y) && IsAdjacent(x, y - 1) && IsAdjacent(x + 1, y - 1)) return new Pattern("4m", "90");
-            if (IsAdjacent(x - 1, y) && IsAdjacent(x, y + 1) && IsAdjacent(x + 1, y) && IsAdjacent(x + 1, y + 1)) return new Pattern("4m", "180");
-            if (IsAdjacent(x, y - 1) && IsAdjacent(x - 1, y) && IsAdjacent(x, y + 1) && IsAdjacent(x - 1, y + 1)) return new Pattern("4m", "270");
+                if (IsAdjacent(x + 1, y) && IsAdjacent(x, y - 1) && IsAdjacent(x - 1, y) && IsAdjacent(x - 1, y - 1)) return new Pattern("4m");
+                if (IsAdjacent(x, y + 1) && IsAdjacent(x + 1, y) && IsAdjacent(x, y - 1) && IsAdjacent(x + 1, y - 1)) return new Pattern("4m", "90");
+                if (IsAdjacent(x - 1, y) && IsAdjacent(x, y + 1) && IsAdjacent(x + 1, y) && IsAdjacent(x + 1, y + 1)) return new Pattern("4m", "180");
+                if (IsAdjacent(x, y - 1) && IsAdjacent(x - 1, y) && IsAdjacent(x, y + 1) && IsAdjacent(x - 1, y + 1)) return new Pattern("4m", "270");
+            }
 
             if (IsAdjacent(x + 1, y) && IsAdjacent(x, y + 1) && IsAdjacent(x - 1, y) && IsAdjacent(x, y - 1)) return new Pattern("4c");
 
-            if (IsAdjacent(x + 1, y) && IsAdjacent(x + 1, y + 1) && IsAdjacent(x, y + 1)) return new Pattern("3");
-            if (IsAdjacent(x - 1, y) && IsAdjacent(x - 1, y + 1) && IsAdjacent(x, y + 1)) return new Pattern("3", "90");
-            if (IsAdjacent(x - 1, y) && IsAdjacent(x - 1, y - 1) && IsAdjacent(x, y - 1)) return new Pattern("3", "180");
-            if (IsAdjacent(x + 1, y) && IsAdjacent(x + 1, y - 1) && IsAdjacent(x, y - 1)) return new Pattern("3", "270");
+            if (allowDiagonal)
+            {
+                if (IsAdjacent(x + 1, y) && IsAdjacent(x + 1, y + 1) && IsAdjacent(x, y + 1)) return new Pattern("3");
+                if (IsAdjacent(x - 1, y) && IsAdjacent(x - 1, y + 1) && IsAdjacent(x, y + 1)) return new Pattern("3", "90");
+                if (IsAdjacent(x - 1, y) && IsAdjacent(x - 1, y - 1) && IsAdjacent(x, y - 1)) return new Pattern("3", "180");
+                if (IsAdjacent(x + 1, y) && IsAdjacent(x + 1, y - 1) && IsAdjacent(x, y - 1)) return new Pattern("3", "270");
+            }
 
             if (IsAdjacent(x, y - 1) && IsAdjacent(x, y + 1) && IsAdjacent(x - 1, y)) return new Pattern("3c");
             if (IsAdjacent(x + 1, y) && IsAdjacent(x, y - 1) && IsAdjacent(x - 1, y)) return new Pattern("3c", "90");

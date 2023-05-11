@@ -21,7 +21,7 @@
   </ItemGroup>
 
   <ItemGroup>
-    <ProjectReference Include="..\..\WPFGame\WPFGame\WPFGame.csproj" />
+    <ProjectReference Include="..\..\WPFGame\WPFGame\OrpticonGameHelper.csproj" />
   </ItemGroup>
 
   <ItemGroup>
@@ -109,7 +109,7 @@
     <None Update="Resources\Car.png">
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
     </None>
-    <None Update="Resources\CNRGN  Builder.ttf">
+    <None Update="Resources\Fonts\CNRGN  Builder.ttf">
       <CopyToOutputDirectory>Always</CopyToOutputDirectory>
     </None>
     <None Update="Resources\Error.png">
@@ -118,7 +118,7 @@
     <None Update="Resources\Garage.png">
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
     </None>
-    <None Update="Resources\helicopter.mp3">
+    <None Update="Resources\Audio\helicopter.mp3">
       <CopyToOutputDirectory>Always</CopyToOutputDirectory>
     </None>
     <None Update="Resources\Helicopter.png">

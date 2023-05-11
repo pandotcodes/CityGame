@@ -5,7 +5,7 @@ VisualStudioVersion = 17.3.32929.385
 MinimumVisualStudioVersion = 10.0.40219.1
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "CityGame", "CityGame\CityGame.csproj", "{5D76B596-FC17-4F47-B5C6-D811DE04F806}"
 EndProject
-Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "WPFGame", "..\WPFGame\WPFGame\WPFGame.csproj", "{4F2DC7EE-24BA-4383-9AB6-EBA46EB191DF}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "OrpticonGameHelper", "..\WPFGame\WPFGame\OrpticonGameHelper.csproj", "{4F2DC7EE-24BA-4383-9AB6-EBA46EB191DF}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution

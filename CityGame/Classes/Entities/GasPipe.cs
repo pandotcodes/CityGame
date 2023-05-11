@@ -1,10 +1,5 @@
 ﻿using CityGame.Classes.Rendering;
-using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
-using WPFGame;
+using OrpticonGameHelper.Classes.Elements;
 
 namespace CityGame.Classes.Entities
 {
@@ -19,7 +14,7 @@ namespace CityGame.Classes.Entities
 
         public override OCanvas Render()
         {
-            return new SourcedImage("ManholeCover.png");
+            return new SourcedImage("ManholeCover.png") { ZIndex = 98, Effects = { selectedEffect } };
         }
 
         public override void Tick(long deltaTime)

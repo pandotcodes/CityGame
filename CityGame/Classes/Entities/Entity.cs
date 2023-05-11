@@ -1,5 +1,6 @@
 ﻿using CityGame.Classes.Rendering;
 using CityGame.Classes.World;
+using OrpticonGameHelper.Classes.Effects;
 
 namespace CityGame.Classes.Entities
 {
@@ -18,6 +19,7 @@ namespace CityGame.Classes.Entities
         public long Time { get; set; }
         public OCanvas Object { get; set; }
         public  bool SingleSelect { get; set; }
+        protected OutlineEffect selectedEffect = new OutlineEffect();
         public OCanvas GetImage()
         {
             return Object;
@@ -41,6 +43,11 @@ namespace CityGame.Classes.Entities
         }
 
         public abstract void Tick(long deltaTime);
+        public void BaseTick(long deltaTime)
+        {
+            if (selectedEffect is not null)
+                selectedEffect.Visible = this == MainWindow.Selected;
+        }
 
         int ISelectable.X()
         {

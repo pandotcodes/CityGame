@@ -5,7 +5,8 @@ using System;
 using System.Collections.Generic;
 using System.Diagnostics;
 using System.Linq;
-using WPFGame;
+using OrpticonGameHelper;
+using OrpticonGameHelper.Classes.Elements;
 
 namespace CityGame.Classes.Entities
 {
@@ -49,7 +50,8 @@ namespace CityGame.Classes.Entities
         {
             OCanvas canvas = new OCanvas();
             Image car = new SourcedImage(PNGFile);
-            car.Effects.Add(new OutlineEffect());
+            car.ZIndex = 99;
+            car.Effects.Add(selectedEffect);
 
             canvas.Children.Add(car);
             var light = new LightSource { Radius = 128, Angle = 64, Intensity = 2, Color = Color.White, Type = LightSourceType.Spotlight, Rotation = -90, RotationOrigin = new Point(MainWindow.TileSize / 2, MainWindow.TileSize / 2) };
