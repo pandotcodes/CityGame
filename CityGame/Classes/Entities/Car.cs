@@ -7,6 +7,10 @@ using System.Diagnostics;
 using System.Linq;
 using OrpticonGameHelper;
 using OrpticonGameHelper.Classes.Elements;
+using System.Threading;
+using AStar;
+using System.Threading.Tasks;
+using System.Collections.Concurrent;
 
 namespace CityGame.Classes.Entities
 {
@@ -37,10 +41,10 @@ namespace CityGame.Classes.Entities
         }
         public float Speed { get; set; } = 128;
         float currentSpeed = 0;
-        public static Dictionary<Tile, Car> OccupiedTilesFill = new Dictionary<Tile, Car>();
-        public static Dictionary<Tile, Car> OccupiedTiles = new Dictionary<Tile, Car>();
-        public static Dictionary<Tile, Car> OccupiedTilesFill2 = new Dictionary<Tile, Car>();
-        public static Dictionary<Tile, Car> OccupiedTiles2 = new Dictionary<Tile, Car>();
+        public static ConcurrentDictionary<Tile, Car> OccupiedTilesFill = new ConcurrentDictionary<Tile, Car>();
+        public static ConcurrentDictionary<Tile, Car> OccupiedTiles = new ConcurrentDictionary<Tile, Car>();
+        public static ConcurrentDictionary<Tile, Car> OccupiedTilesFill2 = new ConcurrentDictionary<Tile, Car>();
+        public static ConcurrentDictionary<Tile, Car> OccupiedTiles2 = new ConcurrentDictionary<Tile, Car>();
         protected string PNGFile = "NPCCar.png";
         protected ColoredRectangle debugRect;
         protected Tile lastTile;
@@ -96,8 +100,15 @@ namespace CityGame.Classes.Entities
         private int curveMode;
         private float curveModePixelDuration;
         private int curveModeStartedAt;
-
-        public override void Tick(long deltaTime)
+        private bool pathfindingInProgress;
+        private async Task<Point[]> CalculatePathAsync(Point start, Point target, PathFinder pathfinder)
+        {
+            return await Task.Run(() =>
+            {
+                return pathfinder.FindPath(start.Convert(), target.Convert()).Select(x => x.Convert()).ToArray();
+            });
+        }
+        public override async void Tick(long deltaTime)
         {
             //deltaTime /= 10;
             //deltaTime *= 500;
@@ -119,15 +130,23 @@ namespace CityGame.Classes.Entities
             else lights.ForEach(x => x.Visible = true);
             if (Target is not null)
             {
+                if (pathfindingInProgress) return;
                 //if(Object is not null) Object.ToolTip = Target.ToString();
-                if (Path is null)
+                if (Path is null && !pathfindingInProgress)
                 {
+                    pathfindingInProgress = true;
                     var pf = MainWindow.pathfinder;
                     if (grid == 2) pf = MainWindow.pathfinderDesperate;
-                    Path = pf.FindPath(Point.Convert(), new Point((int)(Target.X() / MainWindow.TileSize), (int)(Target.Y() / MainWindow.TileSize)).Convert()).Select(x => x.Convert()).ToArray();
+
+                    Point start = Point;
+                    Point target = new Point((int)(Target.X() / MainWindow.TileSize), (int)(Target.Y() / MainWindow.TileSize));
+
+                    Path = await CalculatePathAsync(start, target, pf);
                     NextTarget = 0;
+                    pathfindingInProgress = false;
                 }
                 if (new Point(Target.X() / 64, Target.Y() / 64) != Point) Move(this);
+                if (Path is null) return;
                 if (Path.Length == 0)
                 {
                     JourneyImpossible(this);
@@ -146,13 +165,13 @@ namespace CityGame.Classes.Entities
                     JourneyFinished(this);
                     if (Math.Round(Rotation) == 0 || Math.Round(Rotation) == 90)
                     {
-                        if (!OccupiedTilesFill.ContainsKey(myTile)) OccupiedTilesFill.Add(myTile, this);
-                        if (!OccupiedTilesFill2.ContainsKey(myTile) && fullBlock) OccupiedTilesFill2.Add(myTile, this);
+                        if (!OccupiedTilesFill.ContainsKey(myTile)) OccupiedTilesFill.TryAdd(myTile, this);
+                        if (!OccupiedTilesFill2.ContainsKey(myTile) && fullBlock) OccupiedTilesFill2.TryAdd(myTile, this);
                     }
                     if (Math.Round(Rotation) == 180 || Math.Round(Rotation) == 270)
                     {
-                        if (!OccupiedTilesFill2.ContainsKey(myTile)) OccupiedTilesFill2.Add(myTile, this);
-                        if (!OccupiedTilesFill.ContainsKey(myTile) && fullBlock) OccupiedTilesFill.Add(myTile, this);
+                        if (!OccupiedTilesFill2.ContainsKey(myTile)) OccupiedTilesFill2.TryAdd(myTile, this);
+                        if (!OccupiedTilesFill.ContainsKey(myTile) && fullBlock) OccupiedTilesFill.TryAdd(myTile, this);
                     }
                     return;
                 }
@@ -172,8 +191,8 @@ namespace CityGame.Classes.Entities
 
                 if (Math.Round(Rotation) == 0 || Math.Round(Rotation) == 90)
                 {
-                    if (!OccupiedTilesFill.ContainsKey(myTile)) OccupiedTilesFill.Add(myTile, this);
-                    if (!OccupiedTilesFill2.ContainsKey(myTile) && fullBlock) OccupiedTilesFill2.Add(myTile, this);
+                    if (!OccupiedTilesFill.ContainsKey(myTile)) OccupiedTilesFill.TryAdd(myTile, this);
+                    if (!OccupiedTilesFill2.ContainsKey(myTile) && fullBlock) OccupiedTilesFill2.TryAdd(myTile, this);
                     if (OccupiedTiles.ContainsKey(targetTile) && OccupiedTiles[targetTile] != this)
                     {
                         SpeedMulti = 0;
@@ -182,8 +201,8 @@ namespace CityGame.Classes.Entities
                 }
                 if (Math.Round(Rotation) == 180 || Math.Round(Rotation) == 270)
                 {
-                    if (!OccupiedTilesFill2.ContainsKey(myTile)) OccupiedTilesFill2.Add(myTile, this);
-                    if (!OccupiedTilesFill.ContainsKey(myTile) && fullBlock) OccupiedTilesFill.Add(myTile, this);
+                    if (!OccupiedTilesFill2.ContainsKey(myTile)) OccupiedTilesFill2.TryAdd(myTile, this);
+                    if (!OccupiedTilesFill.ContainsKey(myTile) && fullBlock) OccupiedTilesFill.TryAdd(myTile, this);
                     if (OccupiedTiles2.ContainsKey(targetTile) && OccupiedTiles2[targetTile] != this)
                     {
                         SpeedMulti = 0;
@@ -285,13 +304,13 @@ namespace CityGame.Classes.Entities
             {
                 if (Math.Round(Rotation) == 0 || Math.Round(Rotation) == 90)
                 {
-                    if (!OccupiedTilesFill.ContainsKey(myTile)) OccupiedTilesFill.Add(myTile, this);
-                    if (!OccupiedTilesFill2.ContainsKey(myTile) && fullBlock) OccupiedTilesFill2.Add(myTile, this);
+                    if (!OccupiedTilesFill.ContainsKey(myTile)) OccupiedTilesFill.TryAdd(myTile, this);
+                    if (!OccupiedTilesFill2.ContainsKey(myTile) && fullBlock) OccupiedTilesFill2.TryAdd(myTile, this);
                 }
                 if (Math.Round(Rotation) == 180 || Math.Round(Rotation) == 270)
                 {
-                    if (!OccupiedTilesFill2.ContainsKey(myTile)) OccupiedTilesFill2.Add(myTile, this);
-                    if (!OccupiedTilesFill.ContainsKey(myTile) && fullBlock) OccupiedTilesFill.Add(myTile, this);
+                    if (!OccupiedTilesFill2.ContainsKey(myTile)) OccupiedTilesFill2.TryAdd(myTile, this);
+                    if (!OccupiedTilesFill.ContainsKey(myTile) && fullBlock) OccupiedTilesFill.TryAdd(myTile, this);
                 }
             }
         }

@@ -1,8 +1,10 @@
-﻿namespace CityGame
+﻿using CityGame.Classes.Menu;
+
+namespace CityGame
 {
     public class Program { 
         public static void Main() {
-            var menu = new MainWindow();
+            var game = new MainWindow();
         } 
     }
 }

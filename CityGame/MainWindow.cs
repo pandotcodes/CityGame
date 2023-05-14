@@ -13,6 +13,7 @@ using System.Linq;
 using OrpticonGameHelper;
 using OrpticonGameHelper.Classes.Elements;
 using static CityGame.Classes.Entities.Car;
+using OrpticonGameHelper.Classes.Misc;
 
 namespace CityGame
 {
@@ -190,6 +191,8 @@ namespace CityGame
             int NPCCount = (int)Math.Ceiling(mapHeight * mapWidth / 100f);
             //NPCCount = 1;
             //NPCCount = 0;
+            //NPCCount /= 2;
+            //NPCCount *= 8;
 
             random = new Random(seed);
 
@@ -533,9 +536,9 @@ namespace CityGame
                 Canvas.SetTop(entity.Object, entity.VisualY);
             }
             Car.OccupiedTiles = Car.OccupiedTilesFill;
-            Car.OccupiedTilesFill = new Dictionary<Tile, Car>();
+            Car.OccupiedTilesFill = new System.Collections.Concurrent.ConcurrentDictionary<Tile, Car>();
             Car.OccupiedTiles2 = Car.OccupiedTilesFill2;
-            Car.OccupiedTilesFill2 = new Dictionary<Tile, Car>();
+            Car.OccupiedTilesFill2 = new System.Collections.Concurrent.ConcurrentDictionary<Tile, Car>();
         }
     }
 }
