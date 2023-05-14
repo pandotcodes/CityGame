@@ -11,12 +11,18 @@
     <Compile Remove="Assemblies\**" />
     <EmbeddedResource Remove="Assemblies\**" />
     <None Remove="Assemblies\**" />
+    <None Remove="Classes\Rendering\Particles\explosion.cfx" />
+    <EmbeddedResource Include="Classes\Rendering\Particles\explosion.cfx" />
+    <None Update="Resources\NoiseTexture.png">
+      <CopyToOutputDirectory>Always</CopyToOutputDirectory>
+    </None>
   </ItemGroup>
 
   <ItemGroup>
     <PackageReference Include="AStarLite" Version="1.1.0" />
     <PackageReference Include="NAudio" Version="2.1.0" />
     <PackageReference Include="NAudio.Lame" Version="2.0.1" />
+    <PackageReference Include="NETEasing" Version="1.0.1" />
     <PackageReference Include="SimplexNoise" Version="2.0.0" />
   </ItemGroup>
 
@@ -160,6 +166,10 @@
     <Reference Include="MGUI">
       <HintPath>..\..\..\RE-UI-a-Monogame-GUI\MGUI\bin\Debug\net6.0\MGUI.dll</HintPath>
     </Reference>
+  </ItemGroup>
+
+  <ItemGroup>
+    <EmbeddedResource Include="Classes\Rendering\Particles\explosion.fx" />
   </ItemGroup>
 
 </Project>

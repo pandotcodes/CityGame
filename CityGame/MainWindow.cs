@@ -10,6 +10,8 @@ using SimplexNoise;
 using System;
 using System.Collections.Generic;
 using System.Linq;
+using CityGame.Classes.Rendering.Particles;
+using CityGame.Classes.Rendering.Shaders;
 using OrpticonGameHelper;
 using OrpticonGameHelper.Classes.Elements;
 using static CityGame.Classes.Entities.Car;
@@ -160,6 +162,8 @@ namespace CityGame
             ImageConverter.ChangeColor("Car", "NPCCar", ColorConversionMaps.CarToNPCCar);
             ImageConverter.ChangeColor("Car", "PoliceCar", ColorConversionMaps.CarToPoliceCar);
             #endregion
+            
+            LoadableContent.Add(ShaderLoader.Create());
 
             int seed = 8;
 
