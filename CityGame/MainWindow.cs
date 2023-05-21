@@ -71,6 +71,7 @@ namespace CityGame
         public static Tile[,] Grid;
         public static ISelectable Selected;
         public static OCanvas[,] ImageGrid;
+        public static Vector2 Wind = new Vector2(0.5f, -0.5f);
 
         Canvas MainCanvas = new OCanvas();
         Canvas BGCanvas = new OCanvas();
@@ -509,7 +510,8 @@ namespace CityGame
                 ISelectable select = GetSelectableFromClick(state);
                 if (select is not null)
                 {
-                    Selected = select;
+                    if (select.IsSingleSelect()) select.RunAction(select);
+                    else Selected = select;
                 }
             }
             else if (state.RightButton == ButtonState.Pressed)
