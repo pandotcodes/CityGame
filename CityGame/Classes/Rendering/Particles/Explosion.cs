@@ -20,7 +20,12 @@ public sealed class Explosion : ParticleEmitter, IParticleHandler
     
     private static Effect? _explosionShader = null;
 
-    public Color Color = Color.Yellow;
+    public Color MinColor = Color.Yellow;
+    public Color MaxColor = Color.OrangeRed;
+    public Vector2 DirectionTendency = Vector2.UnitX;
+    public float DirectionVariance = 180;
+    public int ParticleCountMin = 8;
+    public int ParticleCountMax = 8;
     
     public Explosion()
         : base(Explosion.GetShader())
@@ -41,13 +46,16 @@ public sealed class Explosion : ParticleEmitter, IParticleHandler
     public ICollection<IParticle> Generate()
     {
         List<IParticle> particles = new List<IParticle>();
-        for (int i = 0; i < 8; i++)
+        for (int i = 0; i < Random.Shared.Next(ParticleCountMin, ParticleCountMax + 1); i++)
         {
             ExplosionParticle particle = new ExplosionParticle();
             particle.OriginalPosition = particle.Position = Vector2.Zero;
 
-            Vector2 direction = new Vector2(Random.Shared.NextSingle(-1, 1), Random.Shared.NextSingle(-1,1));
-            particle.Direction = direction;
+            float variance = ((float)Random.Shared.NextSingle() * 2 - 1) * DirectionVariance;
+            Vector2 direction = DirectionTendency.RotateBy(variance);
+            particle.Direction = direction * Random.Shared.NextSingle();
+
+            particle.color = Color.Lerp(MinColor, MaxColor, Random.Shared.NextSingle());
 
             particle.LifeTime = EmissionTime;
             particle.LifeTimeScale = Random.Shared.NextSingle(1, 1.5f);
@@ -59,7 +67,7 @@ public sealed class Explosion : ParticleEmitter, IParticleHandler
 
         return particles;
     }
-    
+    public bool EaseMovement { get; set; } = true;
     public void Move(ICollection<IParticle> particles, float deltatime, ParticleEmitter emitter)
     {
 
@@ -72,7 +80,7 @@ public sealed class Explosion : ParticleEmitter, IParticleHandler
                 time = ParticleEmitter.CalculateNormalizedReversedTime(explParticle.LifeTime, this.EmissionTime);
             }
             
-            float distanceCalc = Easing.Easing.OutExpo(time);
+            float distanceCalc = EaseMovement ? Easing.Easing.OutExpo(time) : time;
             float distance = distanceCalc * emitter.MaxParticleDistance;
             particle.Position = particle.OriginalPosition + particle.Direction * distance;
 
@@ -82,10 +90,9 @@ public sealed class Explosion : ParticleEmitter, IParticleHandler
     public void Draw(ref ParticleDrawContext context)
     {
         context.Effect.Parameters["view_projection"].SetValue(context.View * context.Projection);
-        context.Effect.Parameters["color"].SetValue(this.Color.ToVector4());
+        context.Effect.Parameters["color"].SetValue(this.MinColor.ToVector4());
 
-        
-        
+
         context.SpriteBatch.Begin(
             effect: Effect, 
             blendState: BlendState.NonPremultiplied,
@@ -110,6 +117,7 @@ public sealed class Explosion : ParticleEmitter, IParticleHandler
             if (particle is ExplosionParticle explParticle)
             {
                 normTime = ParticleEmitter.CalculateNormalizedReversedTime(explParticle.LifeTime, this.EmissionTime);
+                context.Effect.Parameters["color"].SetValue(explParticle.color.ToVector4());
                 context.Effect.Parameters["noiseOffset"].SetValue(explParticle.UVOffset);
             }
             float time = Easing.Easing.OutExpo(normTime);

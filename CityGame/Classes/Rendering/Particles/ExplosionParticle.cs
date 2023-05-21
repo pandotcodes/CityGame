@@ -8,6 +8,7 @@ public sealed class ExplosionParticle: Particle
     public float LifeTimeScale = 1;
     public float LifeTime = 1;
     public Vector2 UVOffset = Vector2.Zero;
+    public Color color;
 
     public void ReduceLifeTime(float deltatime)
     {

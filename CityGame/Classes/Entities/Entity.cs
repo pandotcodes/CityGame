@@ -1,11 +1,14 @@
 ﻿using CityGame.Classes.Rendering;
+using CityGame.Classes.Rendering.Particles;
 using CityGame.Classes.World;
 using OrpticonGameHelper.Classes.Effects;
+using OrpticonGameHelper.Classes.Elements;
 
 namespace CityGame.Classes.Entities
 {
     public abstract class Entity : ISelectable
     {
+        public bool IsSingleSelect() => SingleSelect;
         public float X { get; set; }
         public float Y { get; set; }
         protected float visualX;
@@ -38,6 +41,21 @@ namespace CityGame.Classes.Entities
             {
                 car.Path = null;
                 car.Target = target;
+                return true;
+            }
+            if(this is GasPipe pipe)
+            {
+                if (pipe.Exploded > 0) return false;
+                Explosion x = new Explosion();
+                pipe.canvas.Children.Add(x);
+                Canvas.SetLeft(x, pipe.GetParticleOrigin().X);
+                Canvas.SetTop(x, pipe.GetParticleOrigin().Y);
+                x.RotationOrigin = new Microsoft.Xna.Framework.Point(MainWindow.TileSize / 2);
+                x.Size = 16;
+                x.MaxParticleDistance = 32;
+                x.Emit();
+                pipe.Exploded = 1;
+                return true;
             }
             return false;
         }

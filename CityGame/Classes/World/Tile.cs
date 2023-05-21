@@ -5,6 +5,7 @@ namespace CityGame.Classes.World
 {
     public struct Tile : ISelectable
     {
+        public bool IsSingleSelect() => false;
         public int BlockID;
         public TileType Type;
         public Pattern Pattern;

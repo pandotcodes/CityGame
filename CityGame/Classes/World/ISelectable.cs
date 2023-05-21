@@ -8,5 +8,6 @@ namespace CityGame.Classes.World
         public bool RunAction(ISelectable target);
         public int X();
         public int Y();
+        public bool IsSingleSelect();
     }
 }
