@@ -11,12 +11,14 @@ using System.Threading;
 using AStar;
 using System.Threading.Tasks;
 using System.Collections.Concurrent;
+using NAudio.Wave;
 
 namespace CityGame.Classes.Entities
 {
     public class Car : Entity
     {
         public int grid = 1;
+        public bool mightSwitchLane = false;
         public long TimeUntilReroute = 5000;
         protected long RerouteTimePassed = 0;
         public static List<Car> Cars = new List<Car>();
@@ -41,10 +43,10 @@ namespace CityGame.Classes.Entities
         }
         public float Speed { get; set; } = 128;
         float currentSpeed = 0;
-        public static ConcurrentDictionary<Tile, Car> OccupiedTilesFill = new ConcurrentDictionary<Tile, Car>();
-        public static ConcurrentDictionary<Tile, Car> OccupiedTiles = new ConcurrentDictionary<Tile, Car>();
-        public static ConcurrentDictionary<Tile, Car> OccupiedTilesFill2 = new ConcurrentDictionary<Tile, Car>();
-        public static ConcurrentDictionary<Tile, Car> OccupiedTiles2 = new ConcurrentDictionary<Tile, Car>();
+        public static ConcurrentDictionary<Tile, ConcurrentBag<Car>> OccupiedTilesFill = new ConcurrentDictionary<Tile, ConcurrentBag<Car>>();
+        public static ConcurrentDictionary<Tile, ConcurrentBag<Car>> OccupiedTiles = new ConcurrentDictionary<Tile, ConcurrentBag<Car>>();
+        public static ConcurrentDictionary<Tile, ConcurrentBag<Car>> OccupiedTilesFill2 = new ConcurrentDictionary<Tile, ConcurrentBag<Car>>();
+        public static ConcurrentDictionary<Tile, ConcurrentBag<Car>> OccupiedTiles2 = new ConcurrentDictionary<Tile, ConcurrentBag<Car>>();
         protected string PNGFile = "NPCCar.png";
         protected ColoredRectangle debugRect;
         protected Tile lastTile;
@@ -101,6 +103,12 @@ namespace CityGame.Classes.Entities
         private float curveModePixelDuration;
         private int curveModeStartedAt;
         private bool pathfindingInProgress;
+        LaneMode laneMode = LaneMode.Default;
+        private long laneSwitchCooldown = 0;
+        enum LaneMode
+        {
+            WrongLane = -1, Parked = 0, Default = 1
+        }
         private async Task<Point[]> CalculatePathAsync(Point start, Point target, PathFinder pathfinder)
         {
             return await Task.Run(() =>
@@ -110,18 +118,19 @@ namespace CityGame.Classes.Entities
         }
         public override async void Tick(long deltaTime)
         {
-            //deltaTime /= 10;
-            //deltaTime *= 500;
-            Tuple<TileType, string>[] fullBlockTiles = new Tuple<TileType, string>[]
+            visualX = X;
+            visualY = Y;
+            visualRotation = Rotation;
+            UseVisualPosition = true;
+            float r = Rotation;
+            if (laneMode == LaneMode.WrongLane)
             {
-                new Tuple<TileType, string>(TileType.Road, "4c"),
-                new Tuple<TileType, string>(TileType.Road, "3c"),
-                new Tuple<TileType, string>(TileType.Road, "1"),
-                new Tuple<TileType, string>(TileType.Garage, null)
-            };
-            //if (this == MainWindow.Selected) Debug.WriteLine("Selected.");
+                r = (r + 180) % 360;
+                Vector2 offsetVector = new Vector2(0,-1).RotateBy(Rotation - 90) * MainWindow.TileSize / 3;
+                visualX += offsetVector.X;
+                visualY += offsetVector.Y;
+            }
             Tile myTile = MainWindow.Grid[Point.X, Point.Y];
-            bool fullBlock = fullBlockTiles.Any(x => (x.Item1 == myTile.Type || (x.Item1 == TileType.Road && (myTile.Type == TileType.Path || myTile.Type == TileType.Highway || myTile.Type == TileType.Bridge || myTile.Type == TileType.HighwayBridge))) && (x.Item2 == myTile.Pattern.PatternCode || x.Item2 is null));
             if (myTile.Type == TileType.Garage)
             {
                 Rotation = ((Canvas)myTile.Element).Children[1].Rotation - 90;
@@ -163,16 +172,7 @@ namespace CityGame.Classes.Entities
                     Path = null;
                     NextTarget = 0;
                     JourneyFinished(this);
-                    if (Math.Round(Rotation) == 0 || Math.Round(Rotation) == 90)
-                    {
-                        if (!OccupiedTilesFill.ContainsKey(myTile)) OccupiedTilesFill.TryAdd(myTile, this);
-                        if (!OccupiedTilesFill2.ContainsKey(myTile) && fullBlock) OccupiedTilesFill2.TryAdd(myTile, this);
-                    }
-                    if (Math.Round(Rotation) == 180 || Math.Round(Rotation) == 270)
-                    {
-                        if (!OccupiedTilesFill2.ContainsKey(myTile)) OccupiedTilesFill2.TryAdd(myTile, this);
-                        if (!OccupiedTilesFill.ContainsKey(myTile) && fullBlock) OccupiedTilesFill.TryAdd(myTile, this);
-                    }
+                    DoLaneBlockades();
                     return;
                 }
                 if (X.CloselyEquals(nextTarget.X * MainWindow.TileSize) && Y.CloselyEquals(nextTarget.Y * MainWindow.TileSize))
@@ -189,30 +189,35 @@ namespace CityGame.Classes.Entities
                 Tile targetTile = MainWindow.Grid[nextTarget.X, nextTarget.Y];
                 Car blockingCar = null;
 
-                if (Math.Round(Rotation) == 0 || Math.Round(Rotation) == 90)
+                DoLaneBlockades();
+                if (Math.Round(r) == 0 || Math.Round(r) == 90)
                 {
-                    if (!OccupiedTilesFill.ContainsKey(myTile)) OccupiedTilesFill.TryAdd(myTile, this);
-                    if (!OccupiedTilesFill2.ContainsKey(myTile) && fullBlock) OccupiedTilesFill2.TryAdd(myTile, this);
-                    if (OccupiedTiles.ContainsKey(targetTile) && OccupiedTiles[targetTile] != this)
+                    if (OccupiedTiles.ContainsKey(targetTile) && OccupiedTiles[targetTile].Any(x => x != this))
                     {
                         SpeedMulti = 0;
-                        blockingCar = OccupiedTiles[targetTile];
+                        blockingCar = OccupiedTiles[targetTile].First(x => x != this);
+                        if (blockingCar is null) blockingCar = this;
                     }
                 }
-                if (Math.Round(Rotation) == 180 || Math.Round(Rotation) == 270)
+                if (Math.Round(r) == 180 || Math.Round(r) == 270)
                 {
-                    if (!OccupiedTilesFill2.ContainsKey(myTile)) OccupiedTilesFill2.TryAdd(myTile, this);
-                    if (!OccupiedTilesFill.ContainsKey(myTile) && fullBlock) OccupiedTilesFill.TryAdd(myTile, this);
-                    if (OccupiedTiles2.ContainsKey(targetTile) && OccupiedTiles2[targetTile] != this)
+                    if (OccupiedTiles2.ContainsKey(targetTile) && OccupiedTiles2[targetTile].Any(x => x != this))
                     {
                         SpeedMulti = 0;
-                        blockingCar = OccupiedTiles2[targetTile];
+                        blockingCar = OccupiedTiles2[targetTile].First(x => x != this);
+                        if (blockingCar is null) blockingCar = this;
                     }
                 }
 
+                laneSwitchCooldown -= (long)Speed * deltaTime;
                 if (SpeedMulti == 0 && blockingCar is not null)
                 {
                     RerouteTimePassed += deltaTime;
+                    if (mightSwitchLane && laneSwitchCooldown <= 0)
+                    {
+                        laneMode = (LaneMode)((int)laneMode * -1);
+                        laneSwitchCooldown = MainWindow.TileSize * 3 * 1000;
+                    }
                     if (RerouteTimePassed > TimeUntilReroute)
                     {
                         var resetFunc = MainWindow.UpdatePathfinding(targetTile, 0, 3);
@@ -221,6 +226,7 @@ namespace CityGame.Classes.Entities
                 }
                 else
                 {
+                    if (laneSwitchCooldown <= 0) laneMode = LaneMode.Default;
                     RerouteTimePassed = 0;
                 }
 
@@ -251,11 +257,11 @@ namespace CityGame.Classes.Entities
                     }
                 }
 
+                if (this is CriminalCar && SpeedMulti > 0 && deltaTime > 0) Debug.WriteLine("running");
                 var possibleDistance = Speed * deltaTime / 1000 * SpeedMulti;
                 var finalDistance = Math.Min(possibleDistance, travel.Length());
                 Vector2 travelFinal = direction * finalDistance;
 
-                UseVisualPosition = false;
                 if (curveMode != 0)
                 {
                     float rotationStart = MainWindow.TileSize * 1.25f;
@@ -265,8 +271,6 @@ namespace CityGame.Classes.Entities
                     if (curveModePixelDuration <= rotationEnd) curveMode = 0;
                     else
                     {
-                        UseVisualPosition = true;
-
                         if (curveModePixelDuration < rotationStart && curveModePixelDuration > rotationEnd)
                         {
                             float percentage = (curveModePixelDuration - rotationEnd) / (rotationStart - rotationEnd);
@@ -284,15 +288,10 @@ namespace CityGame.Classes.Entities
                                 vRotDeg = (-45 * percentage2) * curveMode;
                             }
                             if (this == MainWindow.Selected) Debug.WriteLine(vRotDeg);
-                            visualX = X;
-                            visualY = Y;
-                            visualRotation = Rotation + vRotDeg;
+                            visualRotation += vRotDeg;
                         }
                         else
                         {
-                            visualX = X;
-                            visualY = Y;
-                            visualRotation = Rotation;
                         }
                     }
                 }
@@ -302,16 +301,33 @@ namespace CityGame.Classes.Entities
             }
             else
             {
-                if (Math.Round(Rotation) == 0 || Math.Round(Rotation) == 90)
-                {
-                    if (!OccupiedTilesFill.ContainsKey(myTile)) OccupiedTilesFill.TryAdd(myTile, this);
-                    if (!OccupiedTilesFill2.ContainsKey(myTile) && fullBlock) OccupiedTilesFill2.TryAdd(myTile, this);
-                }
-                if (Math.Round(Rotation) == 180 || Math.Round(Rotation) == 270)
-                {
-                    if (!OccupiedTilesFill2.ContainsKey(myTile)) OccupiedTilesFill2.TryAdd(myTile, this);
-                    if (!OccupiedTilesFill.ContainsKey(myTile) && fullBlock) OccupiedTilesFill.TryAdd(myTile, this);
-                }
+                DoLaneBlockades();
+            }
+        }
+        public void DoLaneBlockades()
+        {
+            Tuple<TileType, string>[] fullBlockTiles = new Tuple<TileType, string>[]
+            {
+                new Tuple<TileType, string>(TileType.Road, "4c"),
+                new Tuple<TileType, string>(TileType.Road, "3c"),
+                new Tuple<TileType, string>(TileType.Road, "1"),
+                new Tuple<TileType, string>(TileType.Garage, null)
+            };
+            //if (this == MainWindow.Selected) Debug.WriteLine("Selected.");
+            Tile myTile = MainWindow.Grid[Point.X, Point.Y];
+            bool fullBlock = fullBlockTiles.Any(x => (x.Item1 == myTile.Type || (x.Item1 == TileType.Road && (myTile.Type == TileType.Path || myTile.Type == TileType.Highway || myTile.Type == TileType.Bridge || myTile.Type == TileType.HighwayBridge))) && (x.Item2 == myTile.Pattern.PatternCode || x.Item2 is null));
+            if (laneMode == LaneMode.Parked) return;
+            float r = Rotation;
+            if (laneMode == LaneMode.WrongLane) r = (r + 180) % 360;
+            if (Math.Round(r) == 0 || Math.Round(r) == 90)
+            {
+                if (!OccupiedTilesFill.ContainsKey(myTile)) OccupiedTilesFill.WeirdAddToList(myTile, this);
+                if (!OccupiedTilesFill2.ContainsKey(myTile) && fullBlock) OccupiedTilesFill2.WeirdAddToList(myTile, this);
+            }
+            if (Math.Round(r) == 180 || Math.Round(r) == 270)
+            {
+                if (!OccupiedTilesFill2.ContainsKey(myTile)) OccupiedTilesFill2.WeirdAddToList(myTile, this);
+                if (!OccupiedTilesFill.ContainsKey(myTile) && fullBlock) OccupiedTilesFill.WeirdAddToList(myTile, this);
             }
         }
     }

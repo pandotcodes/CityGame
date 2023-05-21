@@ -13,6 +13,18 @@
     <None Remove="Assemblies\**" />
     <None Remove="Classes\Rendering\Particles\explosion.cfx" />
     <EmbeddedResource Include="Classes\Rendering\Particles\explosion.cfx" />
+    <None Update="Resources\Audio\in_custody0.mp3">
+      <CopyToOutputDirectory>Always</CopyToOutputDirectory>
+    </None>
+    <None Update="Resources\Audio\missing0.mp3">
+      <CopyToOutputDirectory>Always</CopyToOutputDirectory>
+    </None>
+    <None Update="Resources\Audio\missing1.mp3">
+      <CopyToOutputDirectory>Always</CopyToOutputDirectory>
+    </None>
+    <None Update="Resources\ExplosionHole.png">
+      <CopyToOutputDirectory>Always</CopyToOutputDirectory>
+    </None>
     <None Update="Resources\NoiseTexture.png">
       <CopyToOutputDirectory>Always</CopyToOutputDirectory>
     </None>
@@ -110,7 +122,7 @@
     <None Update="Resources\Garage.png">
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
     </None>
-    <None Update="Resources\Audio\helicopter.mp3">
+    <None Update="Resources\Audio\helicopter0.mp3">
       <CopyToOutputDirectory>Always</CopyToOutputDirectory>
     </None>
     <None Update="Resources\Helicopter.png">

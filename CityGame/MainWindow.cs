@@ -16,6 +16,7 @@ using OrpticonGameHelper;
 using OrpticonGameHelper.Classes.Elements;
 using static CityGame.Classes.Entities.Car;
 using OrpticonGameHelper.Classes.Misc;
+using System.Diagnostics;
 
 namespace CityGame
 {
@@ -78,9 +79,60 @@ namespace CityGame
         internal static Canvas GameCanvas = new OCanvas();
         Canvas CameraCanvas = new OCanvas();
         Canvas UICanvas = new OCanvas();
+        public static Tile FindNearestTile(Tile startPoint, short[,] pfGrid, params Tile[] targets)
+        {
+            var t = FindNearestTarget(new IntPoint(startPoint.X, startPoint.Y), pfGrid, targets.Select(x => new IntPoint(x.X, x.Y)).ToArray());
+            if (t.X == -1 && t.Y == -1) return new Tile { Type = TileType.Invalid };
+            return Grid[t.X, t.Y];
+        }
+        public static Tile FindNearestTile(Tile startPoint, short[,] pfGrid, TileType targetTile)
+        {
+            var targets = new List<Tile>();
+            for (int i = 0; i < Grid.Length; i++)
+            {
+                if (Grid[i % Grid.GetLength(0), i / Grid.GetLength(0)].Type == targetTile) targets.Add(Grid[i % Grid.GetLength(0), i / Grid.GetLength(0)]);
+            }
+            return FindNearestTile(startPoint, pfGrid, targets.ToArray());
+        }
+        public static IntPoint FindNearestTarget(IntPoint startPoint, short[,] pfGrid, params IntPoint[] targets)
+        {
+            var directions = new Vector2[] { new Vector2(0, 1), new Vector2(1, 0), new Vector2(0, -1), new Vector2(-1, 0) };
+            IntPoint result = new IntPoint(0, 0);
+            bool resultFound = false;
+            var searchers = new List<IntPoint>();
+            var processed = new List<IntPoint>();
+            searchers.Add(startPoint);
+            while (!resultFound)
+            {
+                if (searchers.Count == 0) return new IntPoint(-1, -1);
+                var s = searchers.ToList();
+                searchers = new List<IntPoint>();
+                foreach (var searcher in s)
+                {
+                    if (targets.Contains(searcher))
+                    {
+                        result = searcher;
+                        resultFound = true;
+                        break;
+                    }
+                    foreach (var direction in directions)
+                    {
+                        var p = searcher + direction;
+                        if (p.X < 0 || p.Y < 0) continue;
+                        if (p.X >= pfGrid.GetLength(1)) continue;
+                        if (p.Y >= pfGrid.GetLength(0)) continue;
+                        if (processed.Contains(p)) continue;
+                        if (pfGrid[p.Y, p.X] == 0) continue;
+                        processed.Add(p);
+                        searchers.Add(p);
+                    }
+                }
+            }
+            return result;
+        }
 
         /// <summary>
-        /// Updates the pathfinding grids of all grid numbers includes in the "grids" parameter
+        /// Updates the pathfinding grids of all grid numbers included in the "grids" parameter
         /// </summary>
         /// <param name="tile">The tile to update</param>
         /// <param name="value">The value to update the tile to</param>
@@ -163,16 +215,18 @@ namespace CityGame
             ImageConverter.ChangeColor("Error", "ErrorRed", new Dictionary<string, string> { { "#000000", "#ff0000" } });
             ImageConverter.ChangeColor("Car", "NPCCar", ColorConversionMaps.CarToNPCCar);
             ImageConverter.ChangeColor("Car", "PoliceCar", ColorConversionMaps.CarToPoliceCar);
+            ImageConverter.ChangeColor("Car", "CaughtCar", ColorConversionMaps.CarToCaughtCar);
+            ImageConverter.ChangeColor("Car", "CriminalCar", new Dictionary<string, string>());
             #endregion
-            
+
             LoadableContent.Add(ShaderLoader.Create());
 
-            int seed = 8;
+            int seed = (int)(DateTime.Now.Ticks % int.MaxValue);
 
             Noise.Seed = seed;
 
-            int mapHeight = 100;
-            int mapWidth = 200;
+            int mapHeight = 50;
+            int mapWidth = 50;
 
             float[,] lakeMap = Noise.Calc2D(mapWidth, mapHeight, 0.05f);
 
@@ -194,6 +248,7 @@ namespace CityGame
             int minBlockWidth = 3;
 
             int NPCCount = (int)Math.Ceiling(mapHeight * mapWidth / 100f);
+            int CriminalCount = 1;
             //NPCCount = 1;
             //NPCCount = 0;
             //NPCCount /= 2;
@@ -310,6 +365,22 @@ namespace CityGame
                     if (IntermediateGrid[x, y].Type == TileType.Park) changeTo = TileType.Path;
                     if (x < doubleWidth - 1 && IntermediateGrid[x + 1, y].BlockID != myID) IntermediateGrid[x, y].Type = changeTo;
                     if (y < doubleHeight - 1 && IntermediateGrid[x, y + 1].BlockID != myID) IntermediateGrid[x, y].Type = changeTo;
+                    var type = IntermediateGrid[x, y].Type;
+                    if (type == TileType.Bridge) bridgeTiles.Add(IntermediateGrid[x, y]);
+                    if (type == TileType.Road) roadTiles.Add(IntermediateGrid[x, y]);
+                    bool walkable = ((int)type) / 100 == 4;
+                    Grids[2][y, x] = (short)(walkable ? 1 : 0);
+                    if (type == TileType.Path) walkable = false;
+                    Grids[1][y, x] = (short)(walkable ? 1 : 0);
+                }
+            }
+            bool checkBridges = true;
+            if (checkBridges)
+            {
+                foreach (var tile in bridgeTiles)
+                {
+                    IntPoint road = FindNearestTarget(new IntPoint(tile.X, tile.Y), Grids[1], roadTiles.Select(x => new IntPoint(x.X, x.Y)).ToArray());
+                    if (road.X == -1 && road.Y == -1) IntermediateGrid[tile.X, tile.Y].Type = TileType.Lake;
                 }
             }
 
@@ -355,9 +426,21 @@ namespace CityGame
                     startPoint += step;
                 }
             }
-            #endregion
+            for (int y = 0; y < doubleHeight; y++)
+            {
+                for (int x = 0; x < doubleWidth; x++)
+                {
+                    var type = IntermediateGrid[x, y].Type;
+                    bool walkable = ((int)type) / 100 == 4;
+                    Grids[2][y, x] = (short)(walkable ? 1 : 0);
+                    if (type == TileType.Path) walkable = false;
+                    Grids[1][y, x] = (short)(walkable ? 1 : 0);
+                    if (type == TileType.Road || type == TileType.Bridge) npcWalkable.Add(IntermediateGrid[x, y]);
+                }
+            }
 
             Grid = IntermediateGrid;
+            #endregion
             //for(int y = 0; y < mapHeight; y++)
             //{
             //    for(int x = 0; x < mapWidth; x++)
@@ -400,20 +483,6 @@ namespace CityGame
                     GameCanvas.Children.Add(image);
                 }
             }
-            for (int y = 0; y < doubleHeight; y++)
-            {
-                for (int x = 0; x < doubleWidth; x++)
-                {
-                    var type = IntermediateGrid[x, y].Type;
-                    bool walkable = ((int)type) / 100 == 4;
-                    Grids[2][y, x] = (short)(walkable ? 1 : 0);
-                    if (type == TileType.Path) walkable = false;
-                    Grids[1][y, x] = (short)(walkable ? 1 : 0);
-                    if (type == TileType.Bridge) bridgeTiles.Add(IntermediateGrid[x, y]);
-                    if (type == TileType.Road) roadTiles.Add(IntermediateGrid[x, y]);
-                    if (type == TileType.Road || type == TileType.Bridge) npcWalkable.Add(IntermediateGrid[x, y]);
-                }
-            }
 
             foreach (var kvp in Grids) WorldGrids.Add(kvp.Key, new WorldGrid(kvp.Value));
             InstantiatePathfinders();
@@ -436,7 +505,7 @@ namespace CityGame
                 Entities.Add(new PoliceCar { X = x, Y = y });
             }
             var roads = SourcedImage.GetObjectsBySourceFile("Road1.png", "Road2.png", "Road2c.png", "Road3c.png", "Road4c.png");
-            var pipeCount = NPCCount;
+            var pipeCount = NPCCount * 2;
             var pipeRoads = roads.OrderBy(x => random.Next(0, roads.Count)).Take(pipeCount).ToArray();
             foreach (Image image in pipeRoads)
             {
@@ -464,19 +533,35 @@ namespace CityGame
 
                 Entities.Add(car);
             }
+            for (int n = 0; n < CriminalCount; n++)
+            {
+                CriminalCar car = new CriminalCar();
+                bool foundStartPoint = false;
+                Tile startTile = Grid[0, 0];
+                while(!foundStartPoint)
+                {
+                    startTile = npcWalkable[random.Next(0, npcWalkable.Count)];
+                    if (startTile.X > doubleWidth / 3 && startTile.Y > doubleHeight / 3 && startTile.X < doubleWidth / 3 * 2 && startTile.Y < doubleHeight / 3 * 2) foundStartPoint = true;
+                }
+
+                car.Point = new Point(startTile.X, startTile.Y);
+                Entities.Add(car);
+            }
 
             SoundEffectListener = new AudioListener { Position = new Vector3(0, 0, 100) };
 
             Show();
         }
         int swv;
+        public bool PauseEntities = true;
         protected override Color SkyColor(long SpeedFactor)
         {
-            return base.SkyColor(180);
+            return Color.Gray;
         }
         protected override void Update(GameTime time)
         {
             MouseState state = Mouse.GetState();
+            KeyboardState kstate = Keyboard.GetState();
 
             if (state.MiddleButton == ButtonState.Pressed)
             {
@@ -522,12 +607,15 @@ namespace CityGame
                     Selected.RunAction(select);
                 }
             }
+            if (kstate.IsKeyDown(Keys.Space)) PauseEntities = !PauseEntities;
+            PauseParticles = PauseEntities;
 
             long milliseconds = DateTime.Now.Ticks / TimeSpan.TicksPerMillisecond;
             foreach (Entity entity in Entities)
             {
                 long deltaTime = milliseconds - entity.Time;
                 deltaTime = (long)time.ElapsedGameTime.TotalMilliseconds;
+                if (PauseEntities) deltaTime = 0;
                 entity.Time = milliseconds;
                 entity.Tick(deltaTime);
                 entity.BaseTick(deltaTime);
@@ -542,9 +630,9 @@ namespace CityGame
                 Canvas.SetTop(entity.Object, entity.VisualY);
             }
             Car.OccupiedTiles = Car.OccupiedTilesFill;
-            Car.OccupiedTilesFill = new System.Collections.Concurrent.ConcurrentDictionary<Tile, Car>();
+            Car.OccupiedTilesFill = new System.Collections.Concurrent.ConcurrentDictionary<Tile, System.Collections.Concurrent.ConcurrentBag<Car>>();
             Car.OccupiedTiles2 = Car.OccupiedTilesFill2;
-            Car.OccupiedTilesFill2 = new System.Collections.Concurrent.ConcurrentDictionary<Tile, Car>();
+            Car.OccupiedTilesFill2 = new System.Collections.Concurrent.ConcurrentDictionary<Tile, System.Collections.Concurrent.ConcurrentBag<Car>>();
         }
     }
 }

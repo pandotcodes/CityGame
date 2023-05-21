@@ -69,5 +69,11 @@ namespace CityGame.Classes.Rendering
             { "#fc4141", "#4141fc" },
             { "#b80000", "#0000b8" }
         };
+        public static Dictionary<string, string> CarToCaughtCar = new Dictionary<string, string>()
+        {
+            { "#ff0000", "#00ff00" },
+            { "#fc4141", "#41fc41" },
+            { "#b80000", "#00b800" }
+        };
     }
 }

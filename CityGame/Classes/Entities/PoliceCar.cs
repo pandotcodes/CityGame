@@ -12,6 +12,7 @@ namespace CityGame.Classes.Entities
         public PoliceCar() : base()
         {
             grid = 2;
+            mightSwitchLane = true;
             PCars.Add(this);
             Speed = 192;
             PNGFile = "PoliceCar.png";

@@ -1,5 +1,8 @@
-﻿using Microsoft.Xna.Framework;
+﻿using CityGame.Classes.Entities;
+using CityGame.Classes.World;
+using Microsoft.Xna.Framework;
 using System;
+using System.Collections.Concurrent;
 using System.Numerics;
 using System.Reflection.Metadata;
 
@@ -44,6 +47,11 @@ namespace CityGame
             float rotatedX = v.X * cos - v.Y * sin;
             float rotatedY = v.X * sin + v.Y * cos;
             return new System.Numerics.Vector2(rotatedX, rotatedY);
+        }
+        public static void WeirdAddToList<T1, T2>(this ConcurrentDictionary<T1, ConcurrentBag<T2>> list, T1 myTile, T2 car)
+        {
+            if(!list.ContainsKey(myTile)) list.TryAdd(myTile, new ConcurrentBag<T2>());
+            list[myTile].Add(car);
         }
     }
 }

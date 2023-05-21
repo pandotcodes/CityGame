@@ -1,4 +1,6 @@
-﻿namespace CityGame.Classes.Rendering
+﻿using Microsoft.Xna.Framework;
+
+namespace CityGame.Classes.Rendering
 {
     public struct IntPoint
     {
@@ -12,6 +14,14 @@
         public static IntPoint operator +(IntPoint a, IntPoint b)
         {
             return new IntPoint(a.X + b.X, a.Y + b.Y);
+        }
+        public static IntPoint operator -(IntPoint a, Vector2 b)
+        {
+            return new IntPoint(a.X - (int)b.X, a.Y - (int)b.Y);
+        }
+        public static IntPoint operator +(IntPoint a, Vector2 b)
+        {
+            return new IntPoint(a.X + (int)b.X, a.Y + (int)b.Y);
         }
         public static IntPoint operator *(IntPoint a, int b)
         {

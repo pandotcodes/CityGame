@@ -2,6 +2,8 @@
 {
     public enum TileType
     {
+        Invalid = -100,
+
         Skyscraper = 100,
         House = 101,
         Helipad = 102,

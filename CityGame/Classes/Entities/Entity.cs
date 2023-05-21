@@ -48,13 +48,14 @@ namespace CityGame.Classes.Entities
                 if (pipe.Exploded > 0) return false;
                 Explosion x = new Explosion();
                 pipe.canvas.Children.Add(x);
-                Canvas.SetLeft(x, pipe.GetParticleOrigin().X);
-                Canvas.SetTop(x, pipe.GetParticleOrigin().Y);
+                Canvas.SetLeft(x, pipe.GetParticleOrigin().X - 8);
+                Canvas.SetTop(x, pipe.GetParticleOrigin().Y - 8);
                 x.RotationOrigin = new Microsoft.Xna.Framework.Point(MainWindow.TileSize / 2);
                 x.Size = 16;
                 x.MaxParticleDistance = 32;
                 x.Emit();
                 pipe.Exploded = 1;
+                pipe.image.Source = pipe.image.Source.Replace("ManholeCover", "ExplosionHole");
                 return true;
             }
             return false;
