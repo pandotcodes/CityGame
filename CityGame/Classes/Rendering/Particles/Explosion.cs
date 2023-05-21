@@ -82,7 +82,7 @@ public sealed class Explosion : ParticleEmitter, IParticleHandler
     public void Draw(ref ParticleDrawContext context)
     {
         context.Effect.Parameters["view_projection"].SetValue(context.View * context.Projection);
-        context.Effect.Parameters["color"].SetValue(this.Color.ToVector3());
+        context.Effect.Parameters["color"].SetValue(this.Color.ToVector4());
 
         
         

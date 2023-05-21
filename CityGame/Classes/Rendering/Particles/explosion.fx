@@ -15,7 +15,7 @@ int pixelSize;
 float timing;
 float2 noiseOffset;
 
-float3 color;
+float4 color;
 
 #define BLUR_KERNEL_X_MIN -0.5
 #define BLUR_KERNEL_X_MAX 0.5
@@ -108,7 +108,8 @@ float4 SpritePixelShader(PixelInput p) : SV_TARGET {
     val = val + calculateAlpha(relPos, noiseCoord);
     
     float noiseResult = getNoise(noiseCoord).r;
-    float3 resultColor = color * lerp(0.5, 1, noiseResult);
+    float3 resultColor = color.rgb * lerp(0.5, 1, noiseResult);
+    val *= color.a;
     
     return float4(resultColor,val);
 }
